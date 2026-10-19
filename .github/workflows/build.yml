@@ -1,0 +1,44 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ hashFiles('platformio.ini') }}
+      - run: pip install platformio
+      - run: pio run
+      - name: Merge into a single flashable image
+        run: |
+          B=.pio/build/clockstar
+          python ~/.platformio/packages/tool-esptoolpy/esptool.py --chip esp32s3 merge_bin -o stardroid-clockstar.bin \
+            --flash_mode dio --flash_size 4MB \
+            0x0 $B/bootloader.bin 0x8000 $B/partitions.bin \
+            0xe000 ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin \
+            0x10000 $B/firmware.bin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stardroid-clockstar
+          path: stardroid-clockstar.bin
+
+  simulator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libsdl2-dev
+      - run: cmake -S sim -B build/sim -DCMAKE_BUILD_TYPE=Release && cmake --build build/sim -j
+      - name: Headless smoke test (boot, setup, open every app)
+        run: |
+          mkdir -p out
+          ./build/sim/stardroid-sim --out out --script "w3300 s s s s s s s s s s s s s s w2600 p:home s w400 d d d d d d d d d d s w500 p:settings"
+          test -s out/home.ppm && test -s out/settings.ppm
