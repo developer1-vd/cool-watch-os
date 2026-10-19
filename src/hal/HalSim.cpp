@@ -25,6 +25,9 @@ bool sleeping = false;
 uint8_t brightness = 0;
 uint16_t frameCopy[128 * 128];
 std::map<std::string, int32_t> prefs;
+int32_t stepOverride = -1;
+hal::Battery batteryState = { 78, 3990, false, false };
+bool imuOk = true;
 
 }
 
@@ -44,6 +47,12 @@ void setButton(hal::Button b, bool pressed){ buttons[(int) b] = pressed; }
 const uint16_t* lastFrame(){ return frameCopy; }
 
 bool asleep(){ return sleeping; }
+
+void setStepCounter(int32_t steps){ stepOverride = steps; }
+
+void setBattery(const hal::Battery& b){ batteryState = b; }
+
+void setImuPresent(bool present){ imuOk = present; }
 
 }
 
@@ -102,7 +111,7 @@ void setTime(time_t t){
 bool timeValid(){ return true; }
 
 Battery battery(){
-	return { 78, 3990, false, false };
+	return batteryState;
 }
 
 void backlight(uint8_t percent){ brightness = percent; }
@@ -111,7 +120,11 @@ void tone(uint16_t){}
 
 void rgb(bool, bool, bool){}
 
-bool imuPresent(){ return true; }
+int ledCount(){ return 6; }
+
+void led(int, bool){}
+
+bool imuPresent(){ return imuOk; }
 
 Accel accel(){
 	const float t = millis() / 1000.0f;
@@ -119,6 +132,7 @@ Accel accel(){
 }
 
 uint32_t stepCounter(){
+	if(stepOverride >= 0) return (uint32_t) stepOverride;
 	return 4321 + millis() / 600;
 }
 

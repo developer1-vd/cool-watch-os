@@ -6,7 +6,7 @@ namespace apps {
 
 extern const os::AppInfo Boot, Setup, Launcher, FacePicker, Drawer, Notifications;
 extern const os::AppInfo Settings, Fit, Heart, Stopwatch, Timer, Alarm, Ringing;
-extern const os::AppInfo Flashlight, Level, Calendar, Snake, Dino;
+extern const os::AppInfo Flashlight, Level, Calendar, Snake, Dino, HwTest;
 
 // Watch faces (Faces.cpp)
 struct FaceInfo {

@@ -27,6 +27,7 @@ run "$SETUP $(app 7) w800 p:level"
 run "$SETUP $(app 8) s w4000 p:snake"
 run "$SETUP $(app 9) s w2500 s w300 p:dino"
 run "$SETUP $(app 10) p:settings"
+run "$SETUP $(app 10) u w300 u w300 u w300 s w500 u d s b w800 s w300 s w300 s w300 s w3600 p:diagnostics-sensors s w500 p:diagnostics"
 
 python3 - "$OUT" "$DOCS" <<'PY'
 import os, sys

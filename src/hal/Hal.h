@@ -44,6 +44,8 @@ Battery battery();
 void backlight(uint8_t percent); // 0 turns it off
 void tone(uint16_t freq);        // 0 silences the buzzer
 void rgb(bool r, bool g, bool b); // notification LED
+int ledCount();                  // small single-colour LEDs
+void led(int i, bool on);
 
 bool imuPresent();
 Accel accel();

@@ -9,7 +9,7 @@ namespace {
 enum class Page : uint8_t { Main, Brightness, Timeout, Theme, Time, Date, Goal, Battery, About, Developer, Reset };
 
 enum Item : uint8_t {
-	IBrightness, ITimeout, IFace, ITheme, ISound, IDnd, I24h, ITime, IDate, IGoal, IBattery, IAbout, IDeveloper, IReset
+	IBrightness, ITimeout, IFace, ITheme, ISound, IDnd, I24h, ITime, IDate, IGoal, IBattery, IDiagnostics, IAbout, IDeveloper, IReset
 };
 
 const uint8_t Timeouts[] = { 5, 10, 15, 30, 60 };
@@ -295,6 +295,7 @@ private:
 				case IBattery:
 					snprintf(d, 16, "%d%%", hal::battery().percent);
 					return ListView::Row{ "Battery", d, col::AndroidGreen, icon::battery, -1 };
+				case IDiagnostics: return ListView::Row{ "Diagnostics", "Hardware test", col::Teal, icon::check, -1 };
 				case IAbout: return ListView::Row{ "About watch", nullptr, col::TextDim, icon::info, -1 };
 				case IDeveloper: return ListView::Row{ "Developer", nullptr, col::AndroidGreen, icon::code, -1 };
 				default: return ListView::Row{ "Reset watch", nullptr, col::Red, icon::restart, -1 };
@@ -317,6 +318,7 @@ private:
 			case IDate: open(Page::Date); break;
 			case IGoal: open(Page::Goal); break;
 			case IBattery: open(Page::Battery); break;
+			case IDiagnostics: os::startActivity({ "hwtest" }); break;
 			case IAbout: open(Page::About); break;
 			case IDeveloper: open(Page::Developer); break;
 			case IReset: open(Page::Reset); break;

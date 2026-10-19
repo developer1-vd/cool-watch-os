@@ -35,7 +35,18 @@ target_compile_options(lgfx PRIVATE -w)
 target_link_libraries(lgfx PUBLIC ${SDL2_LIBRARIES} pthread)
 
 file(GLOB_RECURSE OS_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../src/*.cpp)
-add_executable(stardroid-sim sim_main.cpp ${OS_SOURCES})
-target_include_directories(stardroid-sim PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
-target_compile_options(stardroid-sim PRIVATE -Wall -Wno-unused-parameter)
-target_link_libraries(stardroid-sim PRIVATE lgfx)
+add_library(stardroid STATIC ${OS_SOURCES})
+target_include_directories(stardroid PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+target_compile_options(stardroid PRIVATE -Wall -Wno-unused-parameter)
+target_link_libraries(stardroid PUBLIC lgfx)
+
+add_executable(stardroid-sim sim_main.cpp)
+target_link_libraries(stardroid-sim PRIVATE stardroid)
+
+# Test program: runs the OS headless with scripted input (see tests/).
+add_executable(stardroid-tests ${CMAKE_CURRENT_SOURCE_DIR}/../tests/os_tests.cpp)
+target_compile_options(stardroid-tests PRIVATE -Wall -Wno-unused-parameter)
+target_link_libraries(stardroid-tests PRIVATE stardroid)
+
+enable_testing()
+add_test(NAME stardroid-tests COMMAND stardroid-tests)

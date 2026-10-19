@@ -331,6 +331,14 @@ void rgb(bool r, bool g, bool b){
 	digitalWrite(pins->rgbB, b ? LOW : HIGH);
 }
 
+int ledCount(){
+	return sizeof(SingleLeds) / sizeof(SingleLeds[0]);
+}
+
+void led(int i, bool on){
+	if(i >= 0 && i < ledCount()) digitalWrite(SingleLeds[i], on ? HIGH : LOW);
+}
+
 bool imuPresent(){
 	return imuOk;
 }

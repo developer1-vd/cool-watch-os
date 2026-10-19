@@ -475,7 +475,8 @@ void dispatch(const KeyEvent& e){
 		return;
 	}
 
-	if(transition != Transition::None && e.action != KeyAction::Up) return;
+	// Keys keep working during transitions: the new activity is already on
+	// top, and dropping them made a quick double-Back lose its second press.
 	if(stack.empty()) return;
 
 	if(stack.back()->onKey(e)) return;
@@ -696,6 +697,14 @@ void goHome(){
 
 Activity* current(){
 	return stack.empty() ? nullptr : stack.back().get();
+}
+
+const char* currentId(){
+	return stackIds.empty() ? nullptr : stackIds.back();
+}
+
+int stackDepth(){
+	return (int) stack.size();
 }
 
 void notify(const char* appId, const char* title, const char* text_, bool showHeadsUp){

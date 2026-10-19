@@ -3,7 +3,7 @@
 void os::registerApps(){
 	using namespace apps;
 	// System activities
-	for(const auto* a : { &Boot, &Setup, &Launcher, &FacePicker, &Drawer, &Notifications, &Ringing }){
+	for(const auto* a : { &Boot, &Setup, &Launcher, &FacePicker, &Drawer, &Notifications, &Ringing, &HwTest }){
 		registerApp(*a);
 	}
 	// App drawer, in display order

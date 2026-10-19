@@ -46,6 +46,8 @@ heads-up notifications, toasts and a power menu.
 - **Settings**: brightness, screen timeout, watch face, colour, sound, DND,
   24-hour time, time and date, step goal, battery, About watch, and reset.
   Tap *Build number* 7 times to unlock developer options.
+- **Diagnostics** (Settings → Diagnostics): a guided hardware self-test, see
+  [Testing](#testing).
 
 ### About heart rate
 
@@ -102,6 +104,64 @@ smoke test in CI:
 ```sh
 ./build/sim/stardroid-sim --out shots --script "w3300 s s p:setup"
 ```
+
+## Testing
+
+### Test program (on your computer and in CI)
+
+`tests/os_tests.cpp` runs the real OS and apps on the headless simulator with
+a virtual clock and scripted button presses. It currently has 45 tests,
+covering:
+
+- Date and time maths, and setting the clock
+- The time and number pickers and lists
+- Input: click, long press, auto-repeat and debouncing
+- The activity lifecycle, back stack, a quick double-Back, and going home
+- The setup wizard end to end, including the values it saves
+- Every watch-face button, opening every app in the drawer, and feeding
+  input to every app
+- 1,500 random button presses (a fuzz test)
+- Notifications: the cap of 8, newest first, unread state, and Do Not Disturb
+- Quick settings and the power menu
+- Screen timeout, waking (the wake press is swallowed), and returning to the
+  watch face
+- A timer and an alarm firing while the watch sleeps, snooze, and no double
+  ringing
+- Step counting, midnight rollover, pedometer resets and the 7-day history
+- Heart-rate BPM from taps
+- Saving and loading settings, and the developer easter egg
+- Diagnostics, including a missing sensor
+
+Each test runs in its own process, so one crash fails only that test, and
+the whole suite takes about a second.
+
+```sh
+cmake -S sim -B build/sim && cmake --build build/sim -j
+./build/sim/stardroid-tests            # everything
+./build/sim/stardroid-tests timer      # tests with "timer" in the name
+ctest --test-dir build/sim             # same, via CTest
+```
+
+### Diagnostics (on the watch)
+
+<img src="docs/screenshots/diagnostics-sensors.png" width="160"> <img src="docs/screenshots/diagnostics.png" width="160">
+
+Settings → Diagnostics walks through 6 stages and ends with a pass/fail
+summary:
+
+1. **Buttons**: press all four (20 s limit).
+2. **Display**: full-screen red, green, blue, white, black, then gradients
+   and a 1 px border to catch dead pixels or a wrong screen offset.
+3. **Backlight**: brightness fades up and down.
+4. **Buzzer**: a rising tone.
+5. **LEDs**: the RGB LED cycles red, green, blue, then each small LED lights
+   in turn.
+6. **Sensors** (scored automatically): the RTC is running and kept its time,
+   the accelerometer reads about 1 g at rest, and the battery voltage is
+   plausible. It also shows the pedometer count and USB/charging state.
+
+For stages 2 to 5, press SELECT if it looked or sounded right and DOWN if not.
+Hold SELECT to quit at any time.
 
 ## How it works
 

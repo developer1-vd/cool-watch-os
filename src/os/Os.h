@@ -87,6 +87,8 @@ void replaceActivity(const Intent& intent); // finish() + start, with a fade
 void finish();  // pops the current activity (Back)
 void goHome();  // clears the stack down to the launcher
 Activity* current();
+const char* currentId(); // app id of the top activity
+int stackDepth();
 
 // ---- System services -------------------------------------------------------
 
