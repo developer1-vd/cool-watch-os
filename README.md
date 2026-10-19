@@ -66,6 +66,22 @@ your last 5 readings. It is not a medical device.
 | SELECT | App drawer (hold: change face) | Select / confirm |
 | BACK | Turn the screen off | Back (hold: power menu) |
 
+## Quick start: `./stardroid.sh`
+
+One script does the whole job, and installs whatever is missing:
+
+```sh
+./stardroid.sh            # install tools if needed, run the tests, build dist/stardroid-clockstar.bin
+./stardroid.sh flash      # build and flash the watch over USB (finds the port itself)
+./stardroid.sh deploy     # test, flash, then open the serial monitor
+./stardroid.sh sim        # run the desktop simulator
+./stardroid.sh test timer # run only the tests with "timer" in the name
+./stardroid.sh help       # every command
+```
+
+It works on Linux (apt, dnf or pacman) and macOS (Homebrew). The rest of
+this README shows the same steps run by hand.
+
 ## Building and flashing
 
 You need [PlatformIO](https://platformio.org/install/cli).
