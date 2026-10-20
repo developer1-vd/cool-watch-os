@@ -60,7 +60,7 @@ private:
 		snprintf(buf, sizeof(buf), "%d kcal", kcal);
 		text(c, buf, 96, y0 + 112, Small, col::Orange, textdatum_t::middle_center);
 		if(!hal::imuPresent()) text(c, "No motion sensor", 64, y0 + 98, Small, col::Red, textdatum_t::middle_center);
-		c.fillTriangle(60, y0 + 122, 68, y0 + 122, 64, y0 + 126, col::TextFaint);
+		c.fillTriangle(60, y0 + 122, 68, y0 + 122, 64, y0 + 126, faint());
 	}
 
 	void drawWeek(os::Canvas& c, int y0){
@@ -79,7 +79,7 @@ private:
 		}
 		const int base = y0 + 100, top = y0 + 36;
 		const int goalY = base - (int) ((base - top) * (s.stepGoal / (float) max));
-		for(int x = 8; x < 120; x += 4) c.drawFastHLine(x, goalY, 2, col::TextFaint);
+		for(int x = 8; x < 120; x += 4) c.drawFastHLine(x, goalY, 2, faint());
 
 		const auto today = os::localTime();
 		for(int i = 0; i < 7; i++){
@@ -150,7 +150,9 @@ public:
 		c.fillTriangle(64 - r * 5 / 3, cy, 64 + r * 5 / 3, cy, 64, cy + r * 5 / 3, col::Red);
 		c.fillRect(64 - r * 4 / 3, cy - r / 3, r * 8 / 3, r / 3 + 1, col::Red);
 
-		drawTrace(c);
+		// On e-paper every redraw blocks input for a moment and would skew the
+		// tap timing, so the measuring screen stays still there.
+		if(!mono()) drawTrace(c);
 
 		char buf[32];
 		switch(state){
@@ -164,6 +166,11 @@ public:
 				}
 				break;
 			case State::Measuring:
+				if(mono()){
+					text(c, "Tap SELECT", 64, 88, Body, col::Text, textdatum_t::middle_center);
+					text(c, "on every beat", 64, 104, Small, col::TextDim, textdatum_t::middle_center);
+					break;
+				}
 				if(taps >= 3){
 					snprintf(buf, sizeof(buf), "%d", liveBpm());
 					text(c, buf, 64, 88, Title, col::Text, textdatum_t::middle_center);

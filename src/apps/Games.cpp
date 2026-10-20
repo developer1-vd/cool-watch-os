@@ -33,7 +33,8 @@ public:
 	void onUpdate(uint32_t dt) override {
 		if(state != State::Playing) return;
 		acc += dt;
-		const uint32_t stepMs = len > 20 ? 90 : 150 - len * 3;
+		uint32_t stepMs = len > 20 ? 90 : 150 - len * 3;
+		if(mono()) stepMs *= 4; // e-paper redraws a few times a second
 		while(acc >= stepMs){
 			acc -= stepMs;
 			step();
@@ -325,4 +326,4 @@ private:
 }
 
 const os::AppInfo apps::Snake = { "snake", "Snake", col::AndroidGreen, icon::snake, os::make<::Snake>, true };
-const os::AppInfo apps::Dino = { "dino", "Dino run", col::TextDim, icon::dino, os::make<::Dino>, true };
+const os::AppInfo apps::Dino = { "dino", "Dino run", col::TextDim, icon::dino, os::make<::Dino>, true, os::NeedsFastDisplay };

@@ -137,6 +137,6 @@ private:
 
 }
 
-const os::AppInfo apps::Flashlight = { "flashlight", "Flashlight", col::Yellow, icon::flashlight, os::make<::Flashlight>, true };
+const os::AppInfo apps::Flashlight = { "flashlight", "Flashlight", col::Yellow, icon::flashlight, os::make<::Flashlight>, true, os::NeedsBacklight };
 const os::AppInfo apps::Level = { "level", "Level", col::Teal, icon::level, os::make<::Level>, true };
 const os::AppInfo apps::Calendar = { "calendar", "Calendar", col::Blue, icon::calendar, os::make<::Calendar>, true };

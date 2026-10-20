@@ -29,12 +29,23 @@ run "$SETUP $(app 9) s w2500 s w300 p:dino"
 run "$SETUP $(app 10) p:settings"
 run "$SETUP $(app 10) u w300 u w300 u w300 s w500 u d s b w800 s w300 s w300 s w300 s w3600 p:diagnostics-sensors s w500 p:diagnostics"
 
+# Watchy (e-paper). Setup has no colour step there, so one Select fewer.
+WSETUP="w3300 s s s s s s s s s s w2600"
+wrun(){ "$SIM" --watchy --out "$OUT" --script "$1"; }
+wrun "$WSETUP p:watchy-face-pixel S w300 d w300 p:watchy-face-analog d p:watchy-face-neon d d p:watchy-face-terminal s w300 b w300 w20000 p:watchy-ambient"
+wrun "$WSETUP u w300 p:watchy-quick-settings b d w300 b s w300 d w300 p:watchy-drawer"
+wrun "$WSETUP $(app 0) w1000 p:watchy-fit"
+wrun "$WSETUP $(app 2) s w7300 d w2400 p:watchy-stopwatch"
+wrun "$WSETUP $(app 5) p:watchy-calendar"
+wrun "$WSETUP $(app 8) p:watchy-settings"
+
 python3 - "$OUT" "$DOCS" <<'PY'
 import os, sys
 from PIL import Image
 src, dst = sys.argv[1], sys.argv[2]
 names = sorted(f[:-4] for f in os.listdir(src) if f.endswith('.ppm'))
 for n in names:
-    Image.open(os.path.join(src, n + '.ppm')).resize((256, 256), Image.NEAREST).save(os.path.join(dst, n + '.png'))
+    im = Image.open(os.path.join(src, n + '.ppm'))
+    im.resize((im.width * 2, im.height * 2), Image.NEAREST).save(os.path.join(dst, n + '.png'))
 print('wrote', len(names), 'screenshots to', dst)
 PY

@@ -1,5 +1,5 @@
 // Clockstar 2.0 hardware layer (ESP32-S3, Arduino core).
-#if defined(ARDUINO) && !defined(LGFX_SDL)
+#if defined(ARDUINO) && !defined(LGFX_SDL) && !defined(STARDROID_WATCHY)
 
 #include "Hal.h"
 #include "Pins.h"
@@ -192,6 +192,15 @@ const int8_t* buttonPins(){
 }
 
 namespace hal {
+
+const Features& features(){
+	static const Features f = { "1.44\" colour LCD", true, false, true, true, true, true };
+	return f;
+}
+
+void setPaperMode(bool){}
+
+void refreshFull(){}
 
 void begin(){
 	uint8_t r = 0;

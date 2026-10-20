@@ -8,7 +8,9 @@ using namespace ui;
 namespace {
 
 // Gives faces a smooth sub-second fraction, since the RTC only ticks in seconds.
+// E-paper gets whole seconds: one refresh per second is all it can do.
 float secondFraction(const os::DateTime& t){
+	if(mono()) return 0;
 	static int lastSec = -1;
 	static uint32_t secStart = 0;
 	if(t.second != lastSec){
@@ -92,7 +94,7 @@ class Drawer : public os::Activity {
 public:
 	void onCreate(const os::Intent&) override {
 		for(int i = 0; i < os::appCount(); i++){
-			if(os::app(i).inDrawer) ids[count++] = i;
+			if(os::app(i).inDrawer && os::appAvailable(os::app(i))) ids[count++] = i;
 		}
 		list.rowH = 28;
 		list.set(count, [](void* ctx, int i){

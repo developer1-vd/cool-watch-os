@@ -4,9 +4,22 @@
 
 #include <LovyanGFX.hpp>
 
-// Hardware abstraction layer. One implementation drives the real Clockstar
-// (HalClockstar.cpp), the other runs the OS in an SDL window (HalSim.cpp).
+// Hardware abstraction layer. HalClockstar.cpp and HalWatchy.cpp drive real
+// watches, HalSim.cpp runs the OS in an SDL window (as either watch).
 namespace hal {
+
+// What the watch can do. The OS and apps adapt to these.
+struct Features {
+	const char* screen;     // shown in About
+	bool color;             // false: black & white e-paper
+	bool persistentDisplay; // keeps its image while the CPU sleeps
+	bool backlight;
+	bool buzzer;            // false: tone() drives a vibration motor
+	bool rgbLed;
+	bool usbDetect;         // can tell when USB power is connected
+};
+
+const Features& features();
 
 enum class Button : uint8_t { Up, Down, Select, Alt, Count };
 
@@ -28,6 +41,8 @@ void begin();
 // Pushes a finished 128x128 frame to the screen.
 void present(LGFX_Sprite& frame);
 void displayPower(bool on);
+void setPaperMode(bool paper); // e-paper: white background, black ink
+void refreshFull();            // e-paper: full refresh next frame (clears ghosting)
 
 bool button(Button b);
 uint32_t millis();

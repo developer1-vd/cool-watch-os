@@ -3,6 +3,7 @@
 //   stardroid-sim                      interactive SDL window
 //   stardroid-sim --script "..." --out DIR
 //                                      headless, scripted, writes PPM frames
+//   --watchy                           run as a Watchy (200x200 e-paper)
 //
 // Script tokens (space separated):
 //   u d s b    click Up / Down / Select / Back
@@ -12,6 +13,7 @@
 //   reset      wipe preferences (first boot)
 #include <LovyanGFX.hpp>
 #include "hal/SimControl.h"
+#include "hal/Mono.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -36,6 +38,19 @@ void savePpm(const std::string& path){
 	FILE* f = fopen(path.c_str(), "wb");
 	if(!f){
 		perror(path.c_str());
+		return;
+	}
+	if(sim::target() == sim::Target::Watchy){
+		fprintf(f, "P6\n%d %d\n255\n", mono::Size, mono::Size);
+		const uint8_t* bits = sim::lastMono();
+		for(int y = 0; y < mono::Size; y++){
+			for(int x = 0; x < mono::Size; x++){
+				const bool white = mono::pixel(bits, x, y);
+				const uint8_t rgb[3] = { (uint8_t) (white ? 222 : 34), (uint8_t) (white ? 222 : 34), (uint8_t) (white ? 212 : 38) };
+				fwrite(rgb, 1, 3, f);
+			}
+		}
+		fclose(f);
 		return;
 	}
 	fprintf(f, "P6\n128 128\n255\n");
@@ -102,6 +117,7 @@ int main(int argc, char** argv){
 	for(int i = 1; i < argc; i++){
 		if(!strcmp(argv[i], "--script") && i + 1 < argc) script = argv[++i];
 		else if(!strcmp(argv[i], "--out") && i + 1 < argc) out = argv[++i];
+		else if(!strcmp(argv[i], "--watchy")) sim::setTarget(sim::Target::Watchy);
 	}
 	if(!script.empty()) return headless(script, out);
 

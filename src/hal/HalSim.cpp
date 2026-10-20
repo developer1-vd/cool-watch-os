@@ -3,6 +3,7 @@
 
 #include "Hal.h"
 #include "SimControl.h"
+#include "Mono.h"
 #include <LovyanGFX.hpp>
 #include <LGFX_AUTODETECT.hpp>
 #include <cmath>
@@ -29,6 +30,27 @@ int32_t stepOverride = -1;
 hal::Battery batteryState = { 78, 3990, false, false };
 bool imuOk = true;
 
+sim::Target simTarget = sim::Target::Clockstar;
+uint8_t monoFrame[mono::Bytes];
+uint8_t monoNext[mono::Bytes];
+bool paperMode = false;
+bool fullPending = true;
+int refreshes = 0, fullRefreshes = 0;
+
+bool watchy(){ return simTarget == sim::Target::Watchy; }
+
+void drawMono(){
+	if(!lcd) return;
+	lcd->startWrite();
+	for(int y = 0; y < mono::Size; y++){
+		for(int x = 0; x < mono::Size; x++){
+			// Slightly warm "paper" and dark grey "ink", like a real panel.
+			lcd->writePixel(x, y, mono::pixel(monoFrame, x, y) ? lgfx::color565(222, 222, 212) : lgfx::color565(34, 34, 38));
+		}
+	}
+	lcd->endWrite();
+}
+
 }
 
 namespace sim {
@@ -54,23 +76,57 @@ void setBattery(const hal::Battery& b){ batteryState = b; }
 
 void setImuPresent(bool present){ imuOk = present; }
 
+void setTarget(Target t){ simTarget = t; }
+
+Target target(){ return simTarget; }
+
+const uint8_t* lastMono(){ return monoFrame; }
+
+int refreshCount(){ return refreshes; }
+
+int fullRefreshCount(){ return fullRefreshes; }
+
 }
 
 namespace hal {
 
+const Features& features(){
+	static const Features clockstar = { "1.44\" colour LCD", true, false, true, true, true, true };
+	static const Features watchyFeatures = { "1.54\" e-paper", false, true, false, false, false, false };
+	return watchy() ? watchyFeatures : clockstar;
+}
+
+void setPaperMode(bool paper){
+	if(paper != paperMode) fullPending = true;
+	paperMode = paper;
+}
+
+void refreshFull(){ fullPending = true; }
+
 void begin(){
 	if(isHeadless) return;
-	lcd = new LGFX(128, 128, 4);
+	lcd = watchy() ? new LGFX(mono::Size, mono::Size, 3) : new LGFX(128, 128, 4);
 	lcd->init();
 	lgfx::Panel_sdl::addKeyCodeMapping(SDLK_RETURN, KeyGpio[2]);
 	lgfx::Panel_sdl::addKeyCodeMapping(SDLK_SPACE, KeyGpio[2]);
 	lgfx::Panel_sdl::addKeyCodeMapping(SDLK_ESCAPE, KeyGpio[3]);
 	lgfx::Panel_sdl::addKeyCodeMapping(SDLK_BACKSPACE, KeyGpio[3]);
-	((lgfx::Panel_sdl*) lcd->panel())->setWindowTitle("StarDroid - Clockstar simulator");
+	((lgfx::Panel_sdl*) lcd->panel())->setWindowTitle(watchy() ? "StarDroid - Watchy simulator" : "StarDroid - Clockstar simulator");
 }
 
 void present(LGFX_Sprite& frame){
 	memcpy(frameCopy, frame.getBuffer(), sizeof(frameCopy));
+	if(watchy()){
+		// Same policy as the real panel: only refresh when the image changes.
+		mono::convert(frameCopy, monoNext, paperMode);
+		if(!fullPending && memcmp(monoNext, monoFrame, mono::Bytes) == 0) return;
+		memcpy(monoFrame, monoNext, mono::Bytes);
+		refreshes++;
+		if(fullPending) fullRefreshes++;
+		fullPending = false;
+		drawMono();
+		return;
+	}
 	if(!lcd) return;
 	if(brightness == 0){
 		lcd->fillScreen(TFT_BLACK);
@@ -80,7 +136,7 @@ void present(LGFX_Sprite& frame){
 }
 
 void displayPower(bool on){
-	if(!on && lcd) lcd->fillScreen(TFT_BLACK);
+	if(!on && lcd && !watchy()) lcd->fillScreen(TFT_BLACK);
 }
 
 bool button(Button b){
@@ -161,9 +217,9 @@ void restart(){
 	exit(0);
 }
 
-uint8_t revision(){ return 3; }
+uint8_t revision(){ return watchy() ? 20 : 3; }
 
-const char* deviceName(){ return "Clockstar 2.0 (sim)"; }
+const char* deviceName(){ return watchy() ? "Watchy (sim)" : "Clockstar 2.0 (sim)"; }
 
 int32_t prefGet(const char* key, int32_t def){
 	auto it = prefs.find(key);

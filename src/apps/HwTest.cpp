@@ -11,7 +11,25 @@ namespace {
 
 enum Stage { Buttons, Display, Backlight, Buzzer, Leds, Sensors, Summary, StageCount };
 
-const char* const StageNames[] = { "Buttons", "Display", "Backlight", "Buzzer", "LEDs", "Sensors" };
+// Stages for hardware this watch doesn't have are skipped.
+bool applicable(int s){
+	const auto& f = hal::features();
+	if(s == Backlight) return f.backlight;
+	if(s == Leds) return f.rgbLed;
+	return s < Summary;
+}
+
+const char* stageName(int s){
+	static const char* const names[] = { "Buttons", "Display", "Backlight", "Buzzer", "LEDs", "Sensors" };
+	if(s == Buzzer && !hal::features().buzzer) return "Vibration";
+	return names[s];
+}
+
+int applicableCount(){
+	int n = 0;
+	for(int s = 0; s < Summary; s++) n += applicable(s);
+	return n;
+}
 
 enum class Result : uint8_t { Untested, Pass, Fail };
 
@@ -30,6 +48,7 @@ public:
 	}
 	uint16_t background() const override {
 		if(stage != Display) return col::Bg;
+		if(mono()) return ((hal::millis() - stageStart) / 700) % 2 ? col::Text : col::Bg;
 		static const uint16_t colors[] = { rgb(255, 0, 0), rgb(0, 255, 0), rgb(0, 0, 255), rgb(255, 255, 255), rgb(0, 0, 0) };
 		return colors[((hal::millis() - stageStart) / 700) % 5];
 	}
@@ -46,6 +65,11 @@ public:
 				else if(t > 20000) finishStage(Result::Fail);
 				break;
 			case Buzzer: {
+				if(!hal::features().buzzer){
+					// Vibration motor: pulse it
+					hal::tone(t % 600 < 300 ? 1 : 0);
+					break;
+				}
 				// Rising sweep, repeating every 1.5 s
 				const uint32_t p = t % 1500;
 				hal::tone(p < 1200 ? (uint16_t) (400 + p * 2) : 0);
@@ -100,13 +124,15 @@ public:
 				text(c, "fade up and down", 64, 88, Small, col::Text, textdatum_t::middle_center);
 				ask(c);
 				break;
-			case Buzzer:
-				title(c, "Buzzer");
+			case Buzzer: {
+				const bool buzzer = hal::features().buzzer;
+				title(c, stageName(Buzzer));
 				icon::sound(c, 64, 52, col::Orange);
-				text(c, "You should hear", 64, 76, Small, col::Text, textdatum_t::middle_center);
-				text(c, "a rising tone", 64, 88, Small, col::Text, textdatum_t::middle_center);
+				text(c, buzzer ? "You should hear" : "You should feel", 64, 76, Small, col::Text, textdatum_t::middle_center);
+				text(c, buzzer ? "a rising tone" : "it pulse", 64, 88, Small, col::Text, textdatum_t::middle_center);
 				ask(c);
 				break;
+			}
 			case Leds:
 				title(c, "LEDs");
 				text(c, "RGB: red, green, blue", 64, 52, Small, col::Text, textdatum_t::middle_center);
@@ -161,7 +187,7 @@ private:
 		}
 		if(s == Summary){
 			bool ok = true;
-			for(auto r : results) ok &= r == Result::Pass;
+			for(int i = 0; i < Summary; i++) ok &= !applicable(i) || results[i] == Result::Pass;
 			os::play(ok ? os::Sound::Success : os::Sound::Error);
 		}
 	}
@@ -169,7 +195,9 @@ private:
 	void finishStage(Result r){
 		results[stage] = r;
 		os::play(os::Sound::Click);
-		enter((Stage) (stage + 1));
+		int next = stage + 1;
+		while(next < Summary && !applicable(next)) next++;
+		enter((Stage) next);
 	}
 
 	void sample(){
@@ -188,8 +216,10 @@ private:
 	}
 
 	void title(os::Canvas& c, const char* s){
+		int index = 1;
+		for(int i = 0; i < stage; i++) index += applicable(i);
 		char buf[32];
-		snprintf(buf, sizeof(buf), "%d/%d  %s", stage + 1, (int) Summary, s);
+		snprintf(buf, sizeof(buf), "%d/%d  %s", index, applicableCount(), s);
 		text(c, buf, 64, 6, Body, accent().primary, textdatum_t::top_center);
 	}
 
@@ -208,7 +238,7 @@ private:
 			const int x = 8 + (i % 2) * 58, y = 44 + (i / 2) * 36;
 			const bool held = hal::button((hal::Button) i);
 			const uint16_t fill = held ? accent().primary : (seen[i] ? accent().container : col::Surface2);
-			c.fillSmoothRoundRect(x, y, 54, 30, 10, fill);
+			card(c, x, y, 54, 30, fill, 10);
 			text(c, names[i], x + 27, seen[i] ? y + 10 : y + 15, Small, held ? accent().container : col::Text, textdatum_t::middle_center);
 			if(seen[i] && !held) icon::check(c, x + 27, y + 21, accent().primary);
 		}
@@ -220,8 +250,15 @@ private:
 
 	void drawDisplay(os::Canvas& c){
 		const uint32_t phase = ((hal::millis() - stageStart) / 700) % 5;
-		const uint16_t fg = phase == 3 ? col::Bg : col::Text;
-		if(phase == 4){
+		const uint16_t fg = mono() ? (phase % 2 ? col::Bg : col::Text) : (phase == 3 ? col::Bg : col::Text);
+		if(mono()){
+			// Checkerboard bands catch stuck e-paper pixels.
+			if(phase == 4){
+				for(int y = 20; y < 100; y++){
+					for(int x = (y & 1); x < os::W; x += 2) c.drawPixel(x, y, col::Text);
+				}
+			}
+		}else if(phase == 4){
 			// Gradient and a 1 px grid catch dead pixels and wrong offsets.
 			for(int x = 0; x < os::W; x++){
 				c.drawFastVLine(x, 0, 40, blend(col::Bg, col::Red, x * 2));
@@ -230,9 +267,11 @@ private:
 			}
 			c.drawRect(0, 0, os::W, os::H, col::Text);
 		}
-		text(c, "2/6  Display", 64, 6, Body, fg, textdatum_t::top_center);
-		text(c, "Even colours and", 64, 56, Small, fg, textdatum_t::middle_center);
-		text(c, "no dead pixels", 64, 68, Small, fg, textdatum_t::middle_center);
+		char buf[24];
+		snprintf(buf, sizeof(buf), "2/%d  Display", applicableCount());
+		text(c, buf, 64, 6, Body, fg, textdatum_t::top_center);
+		text(c, mono() ? "Clean black & white," : "Even colours and", 64, 56, Small, fg, textdatum_t::middle_center);
+		text(c, mono() ? "no stuck pixels" : "no dead pixels", 64, 68, Small, fg, textdatum_t::middle_center);
 		ask(c);
 	}
 
@@ -258,20 +297,22 @@ private:
 		row(76, "Steps", buf, -1);
 		snprintf(buf, sizeof(buf), "%umV %u%%", batt.millivolts, batt.percent);
 		row(90, "Batt", buf, sBat);
-		row(102, "USB", batt.usb ? (batt.charging ? "charging" : "full") : "unplugged", -1);
+		row(102, "USB", !hal::features().usbDetect ? "n/a" : (batt.usb ? (batt.charging ? "charging" : "full") : "unplugged"), -1);
 		text(c, sensorsScored ? "SELECT for results" : "Keep the watch still...", 64, 124, Small, col::TextFaint, textdatum_t::bottom_center);
 	}
 
 	void drawSummary(os::Canvas& c){
 		int passed = 0;
-		for(auto r : results) passed += r == Result::Pass;
-		const bool ok = passed == Summary;
+		for(int i = 0; i < Summary; i++) passed += applicable(i) && results[i] == Result::Pass;
+		const bool ok = passed == applicableCount();
 		char buf[24];
-		snprintf(buf, sizeof(buf), "%d/%d passed", passed, (int) Summary);
+		snprintf(buf, sizeof(buf), "%d/%d passed", passed, applicableCount());
 		text(c, buf, 64, 15, Body, ok ? col::AndroidGreen : col::Red, textdatum_t::top_center);
+		int row = 0;
 		for(int i = 0; i < Summary; i++){
-			const int y = 33 + i * 13;
-			text(c, StageNames[i], 14, y, Small, col::Text);
+			if(!applicable(i)) continue;
+			const int y = 33 + row++ * 13;
+			text(c, stageName(i), 14, y, Small, col::Text);
 			const bool pass = results[i] == Result::Pass;
 			text(c, pass ? "PASS" : "FAIL", 114, y, Small, pass ? col::AndroidGreen : col::Red, textdatum_t::top_right);
 		}

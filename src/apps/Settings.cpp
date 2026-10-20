@@ -9,7 +9,7 @@ namespace {
 enum class Page : uint8_t { Main, Brightness, Timeout, Theme, Time, Date, Goal, Battery, About, Developer, Reset };
 
 enum Item : uint8_t {
-	IBrightness, ITimeout, IFace, ITheme, ISound, IDnd, I24h, ITime, IDate, IGoal, IBattery, IDiagnostics, IAbout, IDeveloper, IReset
+	IBrightness, ITimeout, IFace, ITheme, IPaper, ISound, IDnd, I24h, ITime, IDate, IGoal, IBattery, IDiagnostics, IAbout, IDeveloper, IReset
 };
 
 const uint8_t Timeouts[] = { 5, 10, 15, 30, 60 };
@@ -231,7 +231,7 @@ private:
 			case Page::About:
 				buildTaps = 0;
 				list.rowH = 32;
-				list.set(6, [](void*, int i){
+				list.set(7, [](void*, int i){
 					static char buf[2][24];
 					switch(i){
 						case 0: return ListView::Row{ "Device", hal::deviceName(), col::AndroidGreen, icon::watch, -1 };
@@ -243,7 +243,8 @@ private:
 							snprintf(buf[1], sizeof(buf[1]), "Revision %d", hal::revision());
 							return ListView::Row{ "Hardware", buf[1], col::Blue, icon::gear, -1 };
 						case 4: return ListView::Row{ "Build number", "SD1A.261018.001", col::Yellow, icon::code, -1 };
-						default: return ListView::Row{ "Inspired by", "Android & Wear OS", col::Teal, icon::android, -1 };
+						case 5: return ListView::Row{ "Inspired by", "Android & Wear OS", col::Teal, icon::android, -1 };
+						default: return ListView::Row{ "Display", hal::features().screen, col::Purple, icon::watch, -1 };
 					}
 				}, nullptr);
 				list.selected = 0;
@@ -268,6 +269,9 @@ private:
 		itemCount = 0;
 		for(int i = IBrightness; i <= IReset; i++){
 			if(i == IDeveloper && !s.developer) continue;
+			if(i == ITheme && mono()) continue;
+			if(i == IPaper && !mono()) continue;
+			if(i == IBrightness && !hal::features().backlight) continue;
 			itemIds[itemCount++] = i;
 		}
 		list.rowH = 32;
@@ -284,7 +288,8 @@ private:
 					return ListView::Row{ "Screen off", d, col::Blue, icon::clock, -1 };
 				case IFace: return ListView::Row{ "Watch face", apps::face(s.watchFace).name, col::AndroidGreen, icon::watch, -1 };
 				case ITheme: return ListView::Row{ "Colour", accent().name, accent().primary, icon::palette, -1 };
-				case ISound: return ListView::Row{ "Sound", nullptr, col::Orange, icon::sound, (int8_t) s.sound };
+				case IPaper: return ListView::Row{ "Paper mode", nullptr, col::Text, icon::sun, (int8_t) s.paper };
+				case ISound: return ListView::Row{ hal::features().buzzer ? "Sound" : "Vibration", nullptr, col::Orange, icon::sound, (int8_t) s.sound };
 				case IDnd: return ListView::Row{ "DND", nullptr, col::Purple, icon::dnd, (int8_t) s.dnd };
 				case I24h: return ListView::Row{ "24-hour", nullptr, col::Teal, icon::clock, (int8_t) s.use24h };
 				case ITime: return ListView::Row{ "Set time", nullptr, col::Blue, icon::clock, -1 };
@@ -311,6 +316,11 @@ private:
 			case ITimeout: open(Page::Timeout); break;
 			case IFace: os::startActivity({ "facepicker" }); break;
 			case ITheme: open(Page::Theme); break;
+			case IPaper:
+				s.paper = !s.paper;
+				hal::setPaperMode(s.paper);
+				os::saveSettings();
+				break;
 			case ISound: s.sound = !s.sound; os::saveSettings(); break;
 			case IDnd: s.dnd = !s.dnd; os::saveSettings(); break;
 			case I24h: s.use24h = !s.use24h; os::saveSettings(); break;

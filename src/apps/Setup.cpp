@@ -148,13 +148,20 @@ private:
 		if(t.day > max) t.day = max;
 	}
 
+	// Accent colours mean nothing in black and white, so e-paper skips them.
+	static bool skipped(int s){ return s == Theme && mono(); }
+
 	void next(){
 		os::play(os::Sound::Click);
-		enter((Step) (step + 1));
+		int n = step + 1;
+		if(skipped(n)) n++;
+		enter((Step) n);
 	}
 
 	void back(){
-		if(step > Welcome) enter((Step) (step - 1));
+		int n = step - 1;
+		if(skipped(n)) n--;
+		if(n >= Welcome) enter((Step) n);
 	}
 
 	void enter(Step s){
@@ -217,7 +224,7 @@ private:
 		c.fillSmoothRoundRect(cx - 9, cy + 18, 6, 10, 3, g);
 		c.fillSmoothRoundRect(cx + 3, cy + 18, 6, 10, 3, g);
 		c.fillSmoothRoundRect(cx - 22, cy, 6, 16, 3, g);
-		const float wave = sinf(t * 7) * 0.5f - 0.9f;
+		const float wave = mono() ? -0.9f : sinf(t * 7) * 0.5f - 0.9f;
 		const int ax = cx + 19, ay = cy + 3;
 		c.drawWideLine(ax, ay, ax + (int) (cosf(wave) * 12), ay + (int) (sinf(wave) * 12), 3, g);
 

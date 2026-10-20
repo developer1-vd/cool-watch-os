@@ -7,6 +7,9 @@ on:
 jobs:
   firmware:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        watch: [clockstar, watchy, watchy-v15, watchy-v10]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -17,19 +20,12 @@ jobs:
           path: ~/.platformio
           key: pio-${{ hashFiles('platformio.ini') }}
       - run: pip install platformio
-      - run: pio run
-      - name: Merge into a single flashable image
-        run: |
-          B=.pio/build/clockstar
-          python ~/.platformio/packages/tool-esptoolpy/esptool.py --chip esp32s3 merge_bin -o stardroid-clockstar.bin \
-            --flash_mode dio --flash_size 4MB \
-            0x0 $B/bootloader.bin 0x8000 $B/partitions.bin \
-            0xe000 ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin \
-            0x10000 $B/firmware.bin
+      - name: Build and merge a single flashable image
+        run: ./stardroid.sh --watch ${{ matrix.watch }} image
       - uses: actions/upload-artifact@v4
         with:
-          name: stardroid-clockstar
-          path: stardroid-clockstar.bin
+          name: stardroid-${{ matrix.watch }}
+          path: dist/stardroid-${{ matrix.watch }}.bin
 
   simulator:
     runs-on: ubuntu-latest
@@ -42,4 +38,5 @@ jobs:
         run: |
           mkdir -p out
           ./build/sim/stardroid-sim --out out --script "w3300 s s s s s s s s s s s s s s w2600 p:home s w400 d d d d d d d d d d s w500 p:settings"
-          test -s out/home.ppm && test -s out/settings.ppm
+          ./build/sim/stardroid-sim --watchy --out out --script "w3300 s s s s s s s s s s w2600 p:watchy-home"
+          test -s out/home.ppm && test -s out/settings.ppm && test -s out/watchy-home.ppm

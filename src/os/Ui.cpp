@@ -1,4 +1,5 @@
 #include "Ui.h"
+#include "hal/Mono.h"
 #include <cmath>
 #include <cstdio>
 
@@ -35,7 +36,24 @@ uint16_t blend(uint16_t a, uint16_t b, uint8_t t){
 	return (r << 11) | (g << 5) | bl;
 }
 
+bool mono(){
+	return !hal::features().color;
+}
+
+bool dark(uint16_t color){
+	// Surfaces and accent containers sit below 70; dim text is about 100.
+	const int r = (color >> 11) * 255 / 31, g = ((color >> 5) & 0x3F) * 255 / 63, b = (color & 0x1F) * 255 / 31;
+	return (r * 77 + g * 150 + b * 29) >> 8 < 80;
+}
+
+uint16_t faint(){
+	return mono() ? col::Text : col::TextFaint;
+}
+
 void text(Canvas& c, const char* s, int x, int y, const lgfx::IFont* font, uint16_t color, textdatum_t datum){
+	// On e-paper, grey text loses its thin strokes to the black/white
+	// threshold, so draw all text at full contrast.
+	if(mono()) color = dark(color) ? col::Bg : col::Text;
 	c.setFont(font);
 	c.setTextColor(color);
 	c.setTextDatum(datum);
@@ -65,7 +83,15 @@ void ring(Canvas& c, int cx, int cy, int r, int thick, float frac, uint16_t fg, 
 	c.fillSmoothCircle(cx + (int) lroundf(cosf(a) * mid), cy + (int) lroundf(sinf(a) * mid), (int) rad, fg);
 }
 
-void toggle(Canvas& c, int x, int y, bool on){
+void toggle(Canvas& c, int x, int y, bool on, bool inverted){
+	if(mono()){
+		// Outline pill; filled when on. "inverted" is for focused (white) rows.
+		const uint16_t ink = inverted ? col::Bg : col::Text, paper = inverted ? col::Text : col::Bg;
+		c.fillSmoothRoundRect(x, y, 22, 12, 6, on ? ink : paper);
+		c.drawRoundRect(x, y, 22, 12, 6, ink);
+		c.fillSmoothCircle(on ? x + 16 : x + 6, y + 6, 3, on ? paper : ink);
+		return;
+	}
 	const auto& a = accent();
 	c.fillSmoothRoundRect(x, y, 22, 12, 6, on ? a.primary : col::Surface2);
 	c.fillSmoothCircle(on ? x + 16 : x + 6, y + 6, on ? 4 : 3, on ? a.container : col::TextDim);
@@ -81,9 +107,11 @@ void hint(Canvas& c, const char* s){
 
 void card(Canvas& c, int x, int y, int w, int h, uint16_t color, int r){
 	c.fillSmoothRoundRect(x, y, w, h, r, color);
+	if(mono() && dark(color)) c.drawRoundRect(x, y, w, h, r, col::Text);
 }
 
 float approach(float cur, float target, uint32_t dtMs, float speed){
+	if(mono()) return target; // e-paper can't show in-between frames
 	const float k = 1.0f - expf(-speed * dtMs / 1000.0f);
 	cur += (target - cur) * k;
 	if(fabsf(target - cur) < 0.01f) cur = target;
@@ -111,30 +139,33 @@ void ListView::draw(Canvas& c, int top, int bottom){
 		const int inset = 4 + (int) (dist * dist * 14);
 		const Row row = fn(ctx, i);
 		const bool focus = i == selected;
+		// On e-paper the focused row is drawn inverted (white, black text).
+		const bool inverted = focus && mono();
 
-		c.fillSmoothRoundRect(inset, y + 1, os::W - inset * 2, rowH - 2, (rowH - 2) / 2,
-							  focus ? a.container : col::Surface);
+		if(inverted) c.fillSmoothRoundRect(inset, y + 1, os::W - inset * 2, rowH - 2, (rowH - 2) / 2, col::Text);
+		else card(c, inset, y + 1, os::W - inset * 2, rowH - 2, focus ? a.container : col::Surface, (rowH - 2) / 2);
 
 		int tx = inset + 9;
 		if(row.icon){
 			const int ix = inset + 13, iy = y + rowH / 2;
-			c.fillSmoothCircle(ix, iy, 9, row.color);
-			row.icon(c, ix, iy, col::Bg);
+			c.fillSmoothCircle(ix, iy, 9, inverted ? col::Bg : row.color);
+			row.icon(c, ix, iy, inverted ? col::Text : col::Bg);
 			tx = inset + 26;
 		}
-		const uint16_t fg = focus ? col::Text : col::TextDim;
+		const uint16_t fg = inverted ? col::Bg : (focus ? col::Text : col::TextDim);
+		const uint16_t detailColor = inverted ? col::Bg : (focus ? a.primary : col::TextFaint);
 		int right = os::W - inset - 6;
 		if(row.toggle >= 0){
-			toggle(c, right - 22, y + rowH / 2 - 6, row.toggle);
+			toggle(c, right - 22, y + rowH / 2 - 6, row.toggle, inverted);
 			right -= 26;
 		}
 		if(row.detail && row.toggle < 0 && rowH < 30){
-			text(c, row.detail, right, y + rowH / 2, Small, focus ? a.primary : col::TextFaint, textdatum_t::middle_right);
+			text(c, row.detail, right, y + rowH / 2, Small, detailColor, textdatum_t::middle_right);
 			right -= textWidth(c, row.detail, Small) + 4;
 		}
 		if(row.detail && rowH >= 30){
 			text(c, row.label, tx, y + rowH / 2 - 1, Body, fg, textdatum_t::bottom_left);
-			text(c, row.detail, tx, y + rowH / 2 + 1, Small, focus ? a.primary : col::TextFaint, textdatum_t::top_left);
+			text(c, row.detail, tx, y + rowH / 2 + 1, Small, detailColor, textdatum_t::top_left);
 		}else{
 			c.setClipRect(tx, top, right - tx, bottom - top);
 			text(c, row.label, tx, y + rowH / 2, Body, fg, textdatum_t::middle_left);
@@ -148,7 +179,7 @@ void ListView::draw(Canvas& c, int top, int bottom){
 		const int trackTop = top + 8, trackH = bottom - top - 16;
 		const int thumb = trackH / count < 6 ? 6 : trackH / count;
 		const int ty = trackTop + (int) ((trackH - thumb) * scroll / (count - 1));
-		c.fillRoundRect(os::W - 3, ty, 2, thumb, 1, col::TextFaint);
+		c.fillRoundRect(os::W - 3, ty, 2, thumb, 1, faint());
 	}
 }
 
@@ -212,11 +243,11 @@ void Picker::draw(Canvas& c, int cy, const lgfx::IFont* font){
 		c.setFont(font);
 		const int fh = c.fontHeight();
 		if(active){
-			c.fillSmoothRoundRect(x, cy - fh / 2 - 4, widths[i], fh + 8, 6, a.container);
+			c.fillSmoothRoundRect(x, cy - fh / 2 - 4, widths[i], fh + 8, 6, mono() ? col::Text : a.container);
 			c.fillTriangle(x + widths[i] / 2 - 4, cy - fh / 2 - 7, x + widths[i] / 2 + 4, cy - fh / 2 - 7, x + widths[i] / 2, cy - fh / 2 - 11, a.primary);
 			c.fillTriangle(x + widths[i] / 2 - 4, cy + fh / 2 + 7, x + widths[i] / 2 + 4, cy + fh / 2 + 7, x + widths[i] / 2, cy + fh / 2 + 11, a.primary);
 		}
-		text(c, buf, x + widths[i] / 2, cy, font, active ? col::Text : col::TextDim, textdatum_t::middle_center);
+		text(c, buf, x + widths[i] / 2, cy, font, active ? (mono() ? col::Bg : col::Text) : col::TextDim, textdatum_t::middle_center);
 		x += widths[i];
 		if(fields[i].suffix){
 			text(c, fields[i].suffix, x + sepW[i] / 2, cy, font, col::TextFaint, textdatum_t::middle_center);

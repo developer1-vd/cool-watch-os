@@ -64,6 +64,12 @@ public:
 using ActivityFactory = std::unique_ptr<Activity> (*)();
 using IconFn = void (*)(Canvas& c, int cx, int cy, uint16_t fg);
 
+// Hardware an app can't work without (AppInfo::needs).
+enum Needs : uint8_t {
+	NeedsBacklight = 1,   // e.g. the flashlight
+	NeedsFastDisplay = 2, // real-time games; not on e-paper
+};
+
 struct AppInfo {
 	const char* id;
 	const char* label;
@@ -71,6 +77,7 @@ struct AppInfo {
 	IconFn icon;
 	ActivityFactory create;
 	bool inDrawer;
+	uint8_t needs = 0;
 };
 
 template<typename T>
@@ -81,6 +88,7 @@ void registerApps(); // the built-in app list, apps/Apps.cpp
 int appCount();
 const AppInfo& app(int i);
 const AppInfo* findApp(const char* id);
+bool appAvailable(const AppInfo& app); // its Needs are met on this watch
 
 void startActivity(const Intent& intent);
 void replaceActivity(const Intent& intent); // finish() + start, with a fade
@@ -119,6 +127,9 @@ void wakeScreen();
 void sleepScreen();
 void userActivity(); // resets the screen-off timer
 bool screenOn();
+// E-paper keeps showing the watch face while the CPU sleeps, redrawn once a
+// minute. Faces should leave out seconds while this is true.
+bool ambient();
 
 // Background work that keeps running while the screen is off (timers,
 // alarms). The device sleeps until the earliest msUntilNext().
@@ -143,6 +154,7 @@ struct Settings {
 	bool use24h;
 	bool developer;
 	bool showFps;
+	bool paper; // e-paper: black ink on white instead of the dark theme
 };
 
 Settings& settings();

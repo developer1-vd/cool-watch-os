@@ -64,7 +64,7 @@ void drawAnalog(os::Canvas& c, const os::DateTime& t, float secFrac){
 		const float r0 = major ? 52 : 56, r1 = 59;
 		c.drawWideLine(64 + (int) lroundf(sinf(ang) * r0), 64 - (int) lroundf(cosf(ang) * r0),
 					   64 + (int) lroundf(sinf(ang) * r1), 64 - (int) lroundf(cosf(ang) * r1),
-					   major ? 1.2f : 0.5f, major ? col::Text : col::TextFaint);
+					   major ? 1.2f : 0.5f, major ? col::Text : faint());
 	}
 	text(c, "12", 64, 14, Body, col::Text, textdatum_t::top_center);
 	text(c, "6", 64, 114, Body, col::Text, textdatum_t::bottom_center);
@@ -87,7 +87,7 @@ void drawAnalog(os::Canvas& c, const os::DateTime& t, float secFrac){
 	const float hr = (t.hour % 12) + min / 60.0f;
 	hand(c, hr * 30, 32, 6, 3.0f, 2.0f, col::Text);
 	hand(c, min * 6, 48, 6, 2.4f, 1.4f, col::Text);
-	hand(c, sec * 6, 52, 12, 0.8f, 0.6f, a.primary);
+	if(!os::ambient()) hand(c, sec * 6, 52, 12, 0.8f, 0.6f, a.primary);
 	c.fillSmoothCircle(64, 64, 4, a.primary);
 	c.fillSmoothCircle(64, 64, 1, col::Bg);
 	unreadDot(c, 124);
@@ -96,7 +96,7 @@ void drawAnalog(os::Canvas& c, const os::DateTime& t, float secFrac){
 // Neon: the seconds trace the edge of the square screen.
 void drawNeon(os::Canvas& c, const os::DateTime& t, float secFrac){
 	const auto& a = accent();
-	const float p = (t.second + secFrac) / 60.0f;
+	const float p = os::ambient() ? 0 : (t.second + secFrac) / 60.0f;
 	// Perimeter path starting at top centre, clockwise
 	const int inset = 3;
 	const int side = os::W - inset * 2;
@@ -128,8 +128,10 @@ void drawNeon(os::Canvas& c, const os::DateTime& t, float secFrac){
 	}
 	text(c, buf, 64, 58, &fonts::Orbitron_Light_32, a.primary, textdatum_t::middle_center);
 
-	snprintf(buf, sizeof(buf), "%02d", t.second);
-	text(c, buf, 64, 82, Body, col::TextDim, textdatum_t::middle_center);
+	if(!os::ambient()){
+		snprintf(buf, sizeof(buf), "%02d", t.second);
+		text(c, buf, 64, 82, Body, col::TextDim, textdatum_t::middle_center);
+	}
 	char date[24];
 	snprintf(date, sizeof(date), "%s %s %d", os::weekdayName(t.weekday), os::monthName(t.month), t.day);
 	text(c, date, 64, 26, Small, col::TextDim, textdatum_t::middle_center);
@@ -144,7 +146,7 @@ void drawRings(os::Canvas& c, const os::DateTime& t, float secFrac){
 	const auto b = hal::battery();
 	ring(c, 64, 58, 50, 8, goalFrac(), a.primary, blend(col::Bg, a.primary, 50));
 	ring(c, 64, 58, 40, 8, b.percent / 100.0f, col::Teal, blend(col::Bg, col::Teal, 50));
-	ring(c, 64, 58, 30, 8, (t.second + secFrac) / 60.0f, col::Orange, blend(col::Bg, col::Orange, 50));
+	ring(c, 64, 58, 30, 8, os::ambient() ? 0 : (t.second + secFrac) / 60.0f, col::Orange, blend(col::Bg, col::Orange, 50));
 	char buf[12];
 	snprintf(buf, sizeof(buf), "%d:%02d", displayHour(t.hour), t.minute);
 	text(c, buf, 64, 58, Body, col::Text, textdatum_t::middle_center);
@@ -157,9 +159,11 @@ void drawRings(os::Canvas& c, const os::DateTime& t, float secFrac){
 
 // Terminal: for the developers.
 void drawTerminal(os::Canvas& c, const os::DateTime& t, float secFrac){
-	const uint16_t green = col::AndroidGreen;
-	const uint16_t dim = blend(col::Bg, green, 120);
-	c.setFont(&fonts::Font0);
+	const uint16_t green = mono() ? col::Text : col::AndroidGreen; // full contrast on e-paper
+	const uint16_t dim = mono() ? green : blend(col::Bg, green, 120);
+	// The 1 px bitmap font breaks up when scaled for e-paper; DejaVu doesn't.
+	const lgfx::IFont* small = mono() ? (const lgfx::IFont*) &fonts::DejaVu9 : &fonts::Font0;
+	c.setFont(small);
 	c.setTextDatum(textdatum_t::top_left);
 	char buf[32];
 	int y = 4;
@@ -172,13 +176,17 @@ void drawTerminal(os::Canvas& c, const os::DateTime& t, float secFrac){
 	snprintf(buf, sizeof(buf), "%s %s %02d %d", os::weekdayName(t.weekday), os::monthName(t.month), t.day, t.year);
 	line(buf, green);
 
+	c.setFont(&fonts::Font0); // chunky 3x pixels look right on both screens
 	c.setTextSize(3);
 	snprintf(buf, sizeof(buf), "%02d:%02d", displayHour(t.hour), t.minute);
 	c.setTextColor(green);
 	c.drawString(buf, 4, y + 2);
 	c.setTextSize(1);
-	snprintf(buf, sizeof(buf), ":%02d", t.second);
-	c.drawString(buf, 98, y + 16);
+	c.setFont(small);
+	if(!os::ambient()){
+		snprintf(buf, sizeof(buf), ":%02d", t.second);
+		c.drawString(buf, 98, y + 16);
+	}
 	y += 30;
 
 	const auto b = hal::battery();
@@ -190,7 +198,7 @@ void drawTerminal(os::Canvas& c, const os::DateTime& t, float secFrac){
 	line(buf, green);
 	snprintf(buf, sizeof(buf), "$ %s", os::unreadCount() ? "notif --unread" : "");
 	line(buf, dim);
-	if(secFrac < 0.5f) c.fillRect(4 + 6 * (int) strlen(buf) + 1, y - 10, 5, 8, green);
+	if(secFrac < 0.5f && !os::ambient()) c.fillRect(4 + c.textWidth(buf) + 1, y - 10, 5, 8, green);
 }
 
 const apps::FaceInfo Faces[] = {

@@ -56,6 +56,9 @@ bool swallowUntilRelease = false;
 // ---- Power -----------------------------------------------------------------------
 
 bool lcdOn = true;
+bool ambientMode = false;
+int ambientMinute = -1;
+int ambientRefreshes = 0;
 uint32_t lastActivity = 0;
 float shownBrightness = 0;
 std::vector<Service*> services;
@@ -190,6 +193,7 @@ void pushActivity(const Intent& intent){
 }
 
 void beginTransition(Transition t){
+	if(mono()) return; // e-paper can't animate, just show the new page
 	memcpy(snapshot.getBuffer(), frame.getBuffer(), W * H * 2);
 	transition = t;
 	transitionStart = hal::millis();
@@ -265,19 +269,25 @@ struct Tile {
 	const char* label;
 	IconFn icon;
 };
-const Tile Tiles[] = {
-	{ "Flashlight", icon::flashlight },
-	{ "Brightness", icon::sun },
-	{ "Sound", icon::sound },
-	{ "Do not disturb", icon::dnd },
-	{ "Theme", icon::palette },
-	{ "Settings", icon::gear },
-};
 constexpr int TileCount = 6;
+
+// Tiles follow the hardware: e-paper watches get Refresh and Paper mode
+// instead of Flashlight and Brightness.
+Tile tile(int i){
+	const auto& f = hal::features();
+	switch(i){
+		case 0: return f.backlight ? Tile{ "Flashlight", icon::flashlight } : Tile{ "Refresh screen", icon::restart };
+		case 1: return f.backlight ? Tile{ "Brightness", icon::sun } : Tile{ "Paper mode", icon::sun };
+		case 2: return f.buzzer ? Tile{ "Sound", icon::sound } : Tile{ "Vibration", icon::sound };
+		case 3: return { "Do not disturb", icon::dnd };
+		case 4: return f.color ? Tile{ "Theme", icon::palette } : Tile{ "Watch face", icon::watch };
+		default: return { "Settings", icon::gear };
+	}
+}
 
 bool tileActive(int i){
 	switch(i){
-		case 1: return cfg.brightness >= 75;
+		case 1: return hal::features().backlight ? cfg.brightness >= 75 : cfg.paper;
 		case 2: return cfg.sound;
 		case 3: return cfg.dnd;
 		default: return false;
@@ -287,10 +297,20 @@ bool tileActive(int i){
 void tileTap(int i){
 	switch(i){
 		case 0:
+			if(!hal::features().backlight){
+				hal::refreshFull();
+				break;
+			}
 			shadeOpen = false;
 			startActivity({ "flashlight" });
 			break;
 		case 1: {
+			if(!hal::features().backlight){
+				cfg.paper = !cfg.paper;
+				hal::setPaperMode(cfg.paper);
+				saveSettings();
+				break;
+			}
 			const uint8_t steps[] = { 25, 50, 75, 100 };
 			uint8_t next = steps[0];
 			for(auto s : steps){
@@ -309,7 +329,7 @@ void tileTap(int i){
 		case 2:
 			cfg.sound = !cfg.sound;
 			saveSettings();
-			toast(cfg.sound ? "Sound on" : "Silent");
+			toast(cfg.sound ? (hal::features().buzzer ? "Sound on" : "Vibration on") : "Silent");
 			if(cfg.sound) play(Sound::Click);
 			break;
 		case 3:
@@ -318,6 +338,11 @@ void tileTap(int i){
 			toast(cfg.dnd ? "Do not disturb on" : "Do not disturb off");
 			break;
 		case 4:
+			if(!hal::features().color){
+				shadeOpen = false;
+				startActivity({ "facepicker" });
+				break;
+			}
 			cfg.accent = (cfg.accent + 1) % accentCount();
 			saveSettings();
 			toast(accent().name);
@@ -357,18 +382,22 @@ void drawShade(Canvas& c){
 		const int x = 7 + col_ * 39, y = y0 + 38 + row * 36;
 		const bool on = tileActive(i);
 		const bool focus = i == shadeFocus;
-		c.fillSmoothRoundRect(x, y, 36, 32, 12, on ? a.primary : col::Surface2);
-		if(focus) c.drawRoundRect(x - 1, y - 1, 38, 34, 13, col::Text);
-		Tiles[i].icon(c, x + 18, y + 16, on ? a.container : col::Text);
+		card(c, x, y, 36, 32, on ? a.primary : col::Surface2, 12);
+		if(focus){
+			c.drawRoundRect(x - 1, y - 1, 38, 34, 13, col::Text);
+			if(mono()) c.drawRoundRect(x - 2, y - 2, 40, 36, 14, col::Text);
+		}
+		tile(i).icon(c, x + 18, y + 16, on ? a.container : col::Text);
 	}
 	// Android shows tile labels; on 128 px we show the focused one.
 	char label[32];
-	if(shadeFocus == 1) snprintf(label, sizeof(label), "Brightness %d%%", cfg.brightness);
-	else if(shadeFocus == 2 || shadeFocus == 3) snprintf(label, sizeof(label), "%s %s", Tiles[shadeFocus].label, tileActive(shadeFocus) ? "on" : "off");
-	else if(shadeFocus == 4) snprintf(label, sizeof(label), "Theme: %s", accent().name);
-	else snprintf(label, sizeof(label), "%s", Tiles[shadeFocus].label);
+	const Tile focused = tile(shadeFocus);
+	if(shadeFocus == 1 && hal::features().backlight) snprintf(label, sizeof(label), "Brightness %d%%", cfg.brightness);
+	else if(shadeFocus >= 1 && shadeFocus <= 3) snprintf(label, sizeof(label), "%s %s", focused.label, tileActive(shadeFocus) ? "on" : "off");
+	else if(shadeFocus == 4 && hal::features().color) snprintf(label, sizeof(label), "Theme: %s", accent().name);
+	else snprintf(label, sizeof(label), "%s", focused.label);
 	text(c, label, W / 2, y0 + 113, Small, col::Text, textdatum_t::middle_center);
-	c.fillRoundRect(W / 2 - 12, y0 + H - 6, 24, 3, 1, col::TextFaint);
+	c.fillRoundRect(W / 2 - 12, y0 + H - 6, 24, 3, 1, faint());
 }
 
 // ---- Heads-up notification & toast -------------------------------------------------
@@ -566,6 +595,15 @@ void ledIndicator(bool on){
 	}
 }
 
+void render(uint32_t dt);
+
+void renderAmbient(){
+	ambientMinute = localTime().minute;
+	// Partial refreshes slowly leave ghosts; clean up now and then.
+	if(++ambientRefreshes % 30 == 0) hal::refreshFull();
+	render(0);
+}
+
 void sleepStep(){
 	uint32_t wait = 60000;
 	for(auto* s : services){
@@ -573,8 +611,15 @@ void sleepStep(){
 		if(ms < wait) wait = ms;
 	}
 
+	const bool persistent = hal::features().persistentDisplay;
+	if(persistent){
+		// Wake at the next minute to update the ambient watch face.
+		const uint32_t toMinute = (60 - localTime().second) * 1000u;
+		if(toMinute < wait) wait = toMinute;
+	}
+
 	// Classic Android notification light: blink while there is something unread.
-	const bool blink = unreadCount() > 0 && !cfg.dnd && !hal::battery().usb;
+	const bool blink = hal::features().rgbLed && unreadCount() > 0 && !cfg.dnd && !hal::battery().usb;
 	if(blink){
 		if(wait > 4000) wait = 4000;
 		hal::rgb(false, true, false);
@@ -592,6 +637,8 @@ void sleepStep(){
 			buttons[i].changed = hal::millis();
 		}
 		wakeScreen();
+	}else if(persistent && !lcdOn && localTime().minute != ambientMinute){
+		renderAmbient();
 	}
 }
 
@@ -667,6 +714,13 @@ void registerApp(const AppInfo& app){
 int appCount(){ return numApps; }
 
 const AppInfo& app(int i){ return apps[i]; }
+
+bool appAvailable(const AppInfo& a){
+	const auto& f = hal::features();
+	if((a.needs & NeedsBacklight) && !f.backlight) return false;
+	if((a.needs & NeedsFastDisplay) && f.persistentDisplay) return false;
+	return true;
+}
 
 const AppInfo* findApp(const char* id){
 	if(!id) return nullptr;
@@ -803,6 +857,7 @@ void wakeScreen(){
 	userActivity();
 	if(lcdOn) return;
 	lcdOn = true;
+	ambientMode = false;
 	hal::rgb(false, false, false);
 	hal::displayPower(true);
 	if(!stack.empty()) stack.back()->onResume();
@@ -827,7 +882,13 @@ void sleepScreen(){
 		while(stack.size() > 1) destroyTop();
 		transition = Transition::None;
 	}
+	if(hal::features().persistentDisplay){
+		ambientMode = true;
+		renderAmbient();
+	}
 }
+
+bool ambient(){ return ambientMode; }
 
 void userActivity(){
 	lastActivity = hal::millis();
@@ -850,6 +911,7 @@ void saveSettings(){
 	hal::prefSet("24h", cfg.use24h);
 	hal::prefSet("dev", cfg.developer);
 	hal::prefSet("fps", cfg.showFps);
+	hal::prefSet("paper", cfg.paper);
 }
 
 DateTime localTime(){
@@ -905,6 +967,8 @@ void begin(){
 	cfg.use24h = hal::prefGet("24h", 1);
 	cfg.developer = hal::prefGet("dev", 0);
 	cfg.showFps = hal::prefGet("fps", 0);
+	cfg.paper = hal::prefGet("paper", 1);
+	hal::setPaperMode(cfg.paper);
 
 	for(Canvas* c : { &frame, &work, &snapshot }){
 		c->setColorDepth(16);

@@ -39,6 +39,12 @@ const Accent& accent(); // current
 
 uint16_t blend(uint16_t a, uint16_t b, uint8_t t); // t: 0 = a, 255 = b
 
+// True on black & white e-paper. Widgets swap dark fills for outlines and
+// show focus by inverting, and animations jump straight to their end.
+bool mono();
+bool dark(uint16_t color); // a background-like colour: vanishes on e-paper
+uint16_t faint();          // dim decoration colour that survives e-paper
+
 // Common fonts
 extern const lgfx::IFont* Small;  // ~9 px, UI captions
 extern const lgfx::IFont* Body;   // ~12 px
@@ -50,7 +56,7 @@ void text(Canvas& c, const char* s, int x, int y, const lgfx::IFont* font, uint1
 int textWidth(Canvas& c, const char* s, const lgfx::IFont* font);
 
 void ring(Canvas& c, int cx, int cy, int r, int thick, float frac, uint16_t fg, uint16_t bg);
-void toggle(Canvas& c, int x, int y, bool on);
+void toggle(Canvas& c, int x, int y, bool on, bool inverted = false);
 void header(Canvas& c, const char* title, int y = os::StatusBarH + 1);
 void hint(Canvas& c, const char* text); // bottom button hint
 void card(Canvas& c, int x, int y, int w, int h, uint16_t color, int r = 8);

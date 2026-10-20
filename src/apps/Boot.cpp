@@ -30,7 +30,8 @@ public:
 	}
 
 	void onDraw(os::Canvas& c) override {
-		const uint32_t t = hal::millis() - start;
+		// E-paper can't animate: show the finished logo straight away.
+		const uint32_t t = mono() ? 2900 : hal::millis() - start;
 		const uint16_t colors[] = { col::Blue, col::Red, col::Yellow, col::AndroidGreen };
 		const int cy = os::H / 2;
 

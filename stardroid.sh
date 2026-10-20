@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # StarDroid helper: one script for the whole build / test / flash loop.
 #
-#   ./stardroid.sh            install what's missing, run tests, build firmware
-#   ./stardroid.sh help       list every command
+#   ./stardroid.sh                   install what's missing, run tests, build firmware
+#   ./stardroid.sh --watch watchy    same, for a Watchy
+#   ./stardroid.sh help              list every command
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 SIM_BUILD="$ROOT/build/sim"
-FW_BUILD="$ROOT/.pio/build/clockstar"
+# Which watch to build for; set with --watch NAME or the WATCH variable.
+WATCHES="clockstar watchy watchy-v15 watchy-v10"
+WATCH="${WATCH:-clockstar}"
 DIST="$ROOT/dist"
 JOBS=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)
 
@@ -104,11 +107,15 @@ cmd_doctor(){
 	return $missing
 }
 
+is_watchy(){ [[ "$WATCH" == watchy* ]]; }
+
+fw_build(){ echo "$ROOT/.pio/build/$WATCH"; }
+
 cmd_build(){
 	need_pio
-	step "Building firmware"
-	(cd "$ROOT" && pio run)
-	ok "Firmware: $FW_BUILD/firmware.bin"
+	step "Building firmware for $WATCH"
+	(cd "$ROOT" && pio run -e "$WATCH")
+	ok "Firmware: $(fw_build)/firmware.bin"
 }
 
 cmd_image(){
@@ -118,15 +125,21 @@ cmd_image(){
 	local bootapp="$HOME/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin"
 	[[ -f "$esptool" && -f "$bootapp" ]] || die "PlatformIO packages not found under ~/.platformio"
 	mkdir -p "$DIST"
-	python3 "$esptool" --chip esp32s3 merge_bin -o "$DIST/stardroid-clockstar.bin" \
+	# The original ESP32 (Watchy) puts its bootloader at 0x1000, the S3 at 0x0.
+	local chip=esp32s3 boot=0x0
+	if is_watchy; then chip=esp32 boot=0x1000; fi
+	local out="$DIST/stardroid-$WATCH.bin" build
+	build=$(fw_build)
+	python3 "$esptool" --chip "$chip" merge_bin -o "$out" \
 		--flash_mode dio --flash_size 4MB \
-		0x0 "$FW_BUILD/bootloader.bin" 0x8000 "$FW_BUILD/partitions.bin" \
-		0xe000 "$bootapp" 0x10000 "$FW_BUILD/firmware.bin" >/dev/null
-	ok "Image: $DIST/stardroid-clockstar.bin (flash at 0x0)"
+		"$boot" "$build/bootloader.bin" 0x8000 "$build/partitions.bin" \
+		0xe000 "$bootapp" 0x10000 "$build/firmware.bin" >/dev/null
+	ok "Image: $out (flash at 0x0)"
 }
 
 list_ports(){
-	ls /dev/ttyACM* /dev/ttyUSB* /dev/cu.usbmodem* 2>/dev/null || true
+	# Clockstar: native USB (ACM / usbmodem). Watchy: CP2104 USB-serial.
+	ls /dev/ttyACM* /dev/ttyUSB* /dev/cu.usbmodem* /dev/cu.usbserial* /dev/cu.SLAB_USBtoUART* 2>/dev/null || true
 }
 
 pick_port(){
@@ -136,7 +149,7 @@ pick_port(){
 	fi
 	local ports
 	ports=$(list_ports)
-	[[ -n "$ports" ]] || die "No watch found. Plug it in with a data USB-C cable and turn it on."
+	[[ -n "$ports" ]] || die "No watch found. Plug it in with a USB data cable (not a charge-only one)."
 	if [[ $(echo "$ports" | wc -l) -gt 1 ]]; then
 		warn "Several serial ports found, using the first. Pass one explicitly: ./stardroid.sh flash /dev/ttyACM1" >&2
 	fi
@@ -147,8 +160,8 @@ cmd_flash(){
 	need_pio
 	local port
 	port=$(pick_port "${1:-}")
-	step "Building and flashing to $port"
-	(cd "$ROOT" && pio run -t upload --upload-port "$port")
+	step "Building and flashing $WATCH on $port"
+	(cd "$ROOT" && pio run -e "$WATCH" -t upload --upload-port "$port")
 	ok "Flashed. The watch restarts into StarDroid."
 }
 
@@ -157,7 +170,7 @@ cmd_monitor(){
 	local port
 	port=$(pick_port "${1:-}")
 	step "Serial monitor on $port (Ctrl+C to quit)"
-	(cd "$ROOT" && pio device monitor --port "$port")
+	(cd "$ROOT" && pio device monitor -e "$WATCH" --port "$port")
 }
 
 cmd_deploy(){
@@ -181,8 +194,12 @@ cmd_test(){
 
 cmd_sim(){
 	build_sim
-	step "Starting the simulator (arrows = Up/Down, Enter = Select, Esc = Back)"
-	"$SIM_BUILD/stardroid-sim"
+	step "Starting the $WATCH simulator (arrows = Up/Down, Enter = Select, Esc = Back)"
+	if is_watchy; then
+		"$SIM_BUILD/stardroid-sim" --watchy
+	else
+		"$SIM_BUILD/stardroid-sim"
+	fi
 }
 
 cmd_screenshots(){
@@ -202,11 +219,13 @@ cmd_all(){
 	cmd_test
 	cmd_image
 	step "All done"
-	ok "Tests passed, and the firmware image is in dist/"
+	ok "Tests passed, and the $WATCH firmware image is in dist/"
+	local flash="./stardroid.sh flash"
+	[[ "$WATCH" != clockstar ]] && flash="./stardroid.sh --watch $WATCH flash"
 	if [[ -n "$(list_ports)" ]]; then
-		echo "  Watch detected. Flash it with: ./stardroid.sh flash"
+		echo "  Watch detected. Flash it with: $flash"
 	else
-		echo "  Plug in the watch, then run: ./stardroid.sh flash"
+		echo "  Plug in the watch, then run: $flash"
 	fi
 }
 
@@ -214,14 +233,16 @@ cmd_help(){
 	cat <<EOF
 ${BOLD}StarDroid helper${RESET}
 
-Usage: ./stardroid.sh [command] [args]
+Usage: ./stardroid.sh [--watch NAME] [command] [args]
+
+  --watch NAME     clockstar (default), watchy (v2.0), watchy-v15 or watchy-v10
 
   ${BOLD}(no command)${RESET}     Install what's missing, run tests, build a flashable image
   setup            Install PlatformIO, CMake and SDL2, then check everything
   doctor           Check tools and look for a connected watch
   test [filter]    Build and run the test program (filter: part of a test name)
   build            Build the firmware
-  image            Build and merge dist/stardroid-clockstar.bin (flash at 0x0)
+  image            Build and merge dist/stardroid-<watch>.bin (flash at 0x0)
   flash [port]     Build and flash the watch over USB
   monitor [port]   Open the serial monitor
   deploy [port]    Test, flash, then open the monitor
@@ -235,6 +256,20 @@ EOF
 # ---- Dispatch ------------------------------------------------------------------------
 
 main(){
+	while [[ $# -gt 0 ]]; do
+		case "$1" in
+			-w|--watch)
+				[[ $# -ge 2 ]] || die "--watch needs a name: $WATCHES"
+				WATCH="$2"
+				shift 2
+				;;
+			--watch=*) WATCH="${1#--watch=}"; shift ;;
+			--watchy) WATCH=watchy; shift ;;
+			*) break ;;
+		esac
+	done
+	[[ " $WATCHES " == *" $WATCH "* ]] || die "Unknown watch '$WATCH'. Choose one of: $WATCHES"
+
 	local cmd="${1:-all}"
 	[[ $# -gt 0 ]] && shift
 	case "$cmd" in

@@ -9,6 +9,7 @@
 #include "hal/SimControl.h"
 #include "os/Os.h"
 #include "os/Ui.h"
+#include "hal/Mono.h"
 #include <cmath>
 #include <csignal>
 #include <cstdio>
@@ -795,6 +796,169 @@ TEST(diagnostics_flags_missing_imu){
 	const uint32_t withoutImu = frameChecksum();
 	CHECK_STR(os::currentId(), "hwtest");
 	CHECK(withoutImu != 0);
+}
+
+// ---- Watchy (e-paper) -----------------------------------------------------------------
+
+namespace {
+
+void bootWatchy(bool firstRun = false){
+	sim::setTarget(sim::Target::Watchy);
+	boot(firstRun);
+}
+
+bool paperPixel(int x, int y){ return mono::pixel(sim::lastMono(), x, y); }
+
+}
+
+TEST(watchy_reports_its_hardware){
+	bootWatchy();
+	const auto& f = hal::features();
+	CHECK(!f.color);
+	CHECK(f.persistentDisplay);
+	CHECK(!f.backlight);
+	CHECK(ui::mono());
+	CHECK_STR(os::currentId(), "launcher");
+}
+
+TEST(watchy_drawer_hides_apps_it_cannot_run){
+	bootWatchy();
+	int available = 0;
+	for(int i = 0; i < os::appCount(); i++){
+		const auto& a = os::app(i);
+		if(a.inDrawer && os::appAvailable(a)) available++;
+	}
+	CHECK_EQ(available, 9); // no Flashlight (no backlight), no Dino (too fast for e-paper)
+	CHECK(!os::appAvailable(*os::findApp("flashlight")));
+	CHECK(!os::appAvailable(*os::findApp("dino")));
+	CHECK(os::appAvailable(*os::findApp("snake")));
+}
+
+TEST(watchy_only_refreshes_when_the_image_changes){
+	bootWatchy();
+	const int before = sim::refreshCount();
+	run(5000); // Pixel face has no seconds: nothing should change
+	CHECK_EQ(sim::refreshCount(), before);
+	press(Button::Select); // open the drawer
+	run(500);
+	const int afterOpen = sim::refreshCount();
+	CHECK(afterOpen > before);
+	CHECK(afterOpen - before <= 2); // no animation frames
+}
+
+TEST(watchy_ambient_mode_updates_once_a_minute){
+	bootWatchy();
+	open("drawer");
+	os::sleepScreen();
+	run(200);
+	CHECK(!os::screenOn());
+	CHECK(os::ambient());
+	CHECK_STR(os::currentId(), "launcher"); // the face stays on screen
+	const int before = sim::refreshCount();
+	run(3 * 60000);
+	const int updates = sim::refreshCount() - before;
+	CHECK(updates >= 2 && updates <= 4);
+	press(Button::Down);
+	CHECK(os::screenOn());
+	CHECK(!os::ambient());
+}
+
+TEST(watchy_setup_skips_the_colour_step){
+	bootWatchy(true);
+	// welcome, time (2), date (3), format, face, goal, tour: one less than colour screens
+	for(int i = 0; i < 10; i++) press(Button::Select);
+	run(3000);
+	CHECK_STR(os::currentId(), "launcher");
+	CHECK_EQ(os::settings().accent, 0);
+}
+
+TEST(watchy_paper_mode_flips_the_screen){
+	bootWatchy();
+	CHECK(os::settings().paper);
+	CHECK(paperPixel(2, 198)); // paper: white background
+	const int fulls = sim::fullRefreshCount();
+	press(Button::Up);         // quick settings
+	press(Button::Down);       // Paper mode tile
+	press(Button::Select);
+	press(Button::Alt);
+	run(300);
+	CHECK(!os::settings().paper);
+	CHECK(!paperPixel(2, 198)); // dark background
+	CHECK(sim::fullRefreshCount() > fulls); // a full refresh clears the inverted ghost
+	CHECK_EQ(hal::prefGet("paper", 1), 0);
+}
+
+TEST(watchy_refresh_tile_does_a_full_refresh){
+	bootWatchy();
+	const int fulls = sim::fullRefreshCount();
+	press(Button::Up);
+	press(Button::Select); // first tile: Refresh screen
+	run(300);
+	CHECK_EQ(sim::fullRefreshCount(), fulls + 1);
+}
+
+TEST(watchy_every_app_survives_input){
+	bootWatchy();
+	for(int i = 0; i < os::appCount(); i++){
+		const auto& app = os::app(i);
+		if(!strcmp(app.id, "boot") || !strcmp(app.id, "setup")) continue;
+		os::startActivity({ app.id });
+		run(400);
+		for(Button b : { Button::Up, Button::Down, Button::Select, Button::Up, Button::Select }) press(b);
+		run(500);
+		os::goHome();
+		run(400);
+		CHECK_STR(os::currentId(), "launcher");
+	}
+}
+
+TEST(watchy_random_button_mashing){
+	bootWatchy();
+	srand(99);
+	for(int i = 0; i < 800; i++){
+		const Button b = (Button) (rand() % 4);
+		if(b == Button::Alt && rand() % 4 == 0) continue;
+		press(b, 20 + rand() % 120);
+		CHECK(os::stackDepth() >= 1);
+		if(!os::screenOn()) press(Button::Up);
+	}
+}
+
+TEST(watchy_heart_rate_screen_stays_still_while_tapping){
+	bootWatchy();
+	open("heart");
+	press(Button::Select);
+	run(300);
+	const int before = sim::refreshCount();
+	for(int i = 0; i < 6; i++){
+		sim::setButton(Button::Select, true);
+		run(75);
+		sim::setButton(Button::Select, false);
+		run(675);
+	}
+	// Redraws would block input on e-paper and skew the timing
+	CHECK_EQ(sim::refreshCount(), before);
+}
+
+TEST(watchy_diagnostics_skips_missing_hardware){
+	bootWatchy();
+	open("hwtest");
+	for(Button b : { Button::Up, Button::Down, Button::Select, Button::Alt }) press(b);
+	run(600);
+	press(Button::Select); // display
+	press(Button::Select); // vibration; no backlight or LED stages
+	run(3500);             // sensors
+	press(Button::Select); // to the summary
+	run(300);
+	// From the summary, SELECT restarts the test; after the Buttons stage
+	// BACK on the Display stage leaves the app. Had a stage not been skipped,
+	// we would still be in the Sensors stage, which swallows every key.
+	press(Button::Select);
+	for(Button b : { Button::Up, Button::Down, Button::Select, Button::Alt }) press(b);
+	run(600);
+	press(Button::Alt);
+	run(400);
+	CHECK_STR(os::currentId(), "launcher");
 }
 
 // ---- Runner --------------------------------------------------------------------------------

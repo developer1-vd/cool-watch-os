@@ -6,6 +6,13 @@
 // (scripted input, virtual clock, frame capture).
 namespace sim {
 
+enum class Target : uint8_t { Clockstar, Watchy };
+void setTarget(Target t); // call before os::begin()
+Target target();
+const uint8_t* lastMono(); // Watchy: 200x200 1-bpp, see hal/Mono.h
+int refreshCount();        // Watchy: e-paper refreshes so far
+int fullRefreshCount();
+
 void setHeadless(uint32_t startEpoch);
 bool headless();
 void advance(uint32_t ms);

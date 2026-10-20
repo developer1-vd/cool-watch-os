@@ -156,7 +156,7 @@ public:
 		c.fillSmoothCircle(64 + (int) (cosf(ang) * 35.5f), 52 + (int) (sinf(ang) * 35.5f), 3, s.running ? a.primary : col::TextDim);
 
 		char buf[16];
-		formatDuration(buf, sizeof(buf), ms, true);
+		formatDuration(buf, sizeof(buf), ms, !mono()); // e-paper: whole seconds
 		text(c, buf, 64, 52, Title, col::Text, textdatum_t::middle_center);
 		text(c, s.running ? "SEL pause   DN lap" : (ms ? "SEL resume   DN reset" : "SELECT start"), 64, 124, Small, col::TextFaint, textdatum_t::bottom_center);
 
@@ -349,10 +349,10 @@ public:
 	void onDraw(os::Canvas& c) override {
 		const uint32_t t = hal::millis() - start;
 		const auto& a = accent();
-		const float pulse = (sinf(t / 120.0f) + 1) / 2;
+		const float pulse = mono() ? 1 : (sinf(t / 120.0f) + 1) / 2;
 		c.fillSmoothCircle(64, 52, 26 + (int) (pulse * 8), a.container);
 		c.fillSmoothCircle(64, 52, 24, a.primary);
-		const int wobble = (int) (sinf(t / 40.0f) * 2);
+		const int wobble = mono() ? 0 : (int) (sinf(t / 40.0f) * 2);
 		if(isTimer) icon::timer(c, 64 + wobble, 52, a.container);
 		else icon::alarm(c, 64 + wobble, 52, a.container);
 
