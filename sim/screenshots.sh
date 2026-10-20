@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Regenerates docs/screenshots from the headless simulator.
-# Usage: sim/screenshots.sh path/to/stardroid-sim
+# Usage: sim/screenshots.sh path/to/coolwatch-sim
 set -euo pipefail
-SIM=${1:?path to stardroid-sim}
+SIM=${1:?path to coolwatch-sim}
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 OUT=$(mktemp -d)
 DOCS="$ROOT/docs/screenshots"

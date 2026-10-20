@@ -140,7 +140,7 @@ namespace icon {
 	void apps(Canvas& c, int cx, int cy, uint16_t fg);
 }
 
-// The StarDroid logo: a watch outline with a four-point sparkle. s is half
+// The Cool Watch OS logo: a watch outline with a four-point sparkle. s is half
 // the width of the watch body; bg fills the face.
 void drawLogo(Canvas& c, int cx, int cy, int s, uint16_t fg, uint16_t bg);
 void sparkle(Canvas& c, int cx, int cy, int rx, int ry, uint16_t color);

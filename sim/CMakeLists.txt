@@ -1,7 +1,7 @@
-# Desktop simulator for StarDroid. Runs the exact same OS and app code as the
+# Desktop simulator for Cool Watch OS. Runs the exact same OS and app code as the
 # watch, on top of LovyanGFX's SDL2 backend.
 cmake_minimum_required(VERSION 3.16)
-project(stardroid_sim CXX C)
+project(coolwatch_sim CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -35,18 +35,18 @@ target_compile_options(lgfx PRIVATE -w)
 target_link_libraries(lgfx PUBLIC ${SDL2_LIBRARIES} pthread)
 
 file(GLOB_RECURSE OS_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../src/*.cpp)
-add_library(stardroid STATIC ${OS_SOURCES})
-target_include_directories(stardroid PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../src)
-target_compile_options(stardroid PRIVATE -Wall -Wno-unused-parameter)
-target_link_libraries(stardroid PUBLIC lgfx)
+add_library(coolwatch STATIC ${OS_SOURCES})
+target_include_directories(coolwatch PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+target_compile_options(coolwatch PRIVATE -Wall -Wno-unused-parameter)
+target_link_libraries(coolwatch PUBLIC lgfx)
 
-add_executable(stardroid-sim sim_main.cpp)
-target_link_libraries(stardroid-sim PRIVATE stardroid)
+add_executable(coolwatch-sim sim_main.cpp)
+target_link_libraries(coolwatch-sim PRIVATE coolwatch)
 
 # Test program: runs the OS headless with scripted input (see tests/).
-add_executable(stardroid-tests ${CMAKE_CURRENT_SOURCE_DIR}/../tests/os_tests.cpp)
-target_compile_options(stardroid-tests PRIVATE -Wall -Wno-unused-parameter)
-target_link_libraries(stardroid-tests PRIVATE stardroid)
+add_executable(coolwatch-tests ${CMAKE_CURRENT_SOURCE_DIR}/../tests/os_tests.cpp)
+target_compile_options(coolwatch-tests PRIVATE -Wall -Wno-unused-parameter)
+target_link_libraries(coolwatch-tests PRIVATE coolwatch)
 
 enable_testing()
-add_test(NAME stardroid-tests COMMAND stardroid-tests)
+add_test(NAME coolwatch-tests COMMAND coolwatch-tests)

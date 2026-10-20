@@ -264,7 +264,7 @@ private:
 		c.fillSmoothCircle(64, 52, (int) (8 + p * 18), a.primary);
 		if(p >= 1) icon::check(c, 64, 52, a.container);
 		text(c, "You're all set", 64, 92, Body, col::Text, textdatum_t::middle_center);
-		text(c, "Enjoy StarDroid", 64, 108, Small, col::TextDim, textdatum_t::middle_center);
+		text(c, "Enjoy Cool Watch OS", 64, 108, Small, col::TextDim, textdatum_t::middle_center);
 	}
 };
 

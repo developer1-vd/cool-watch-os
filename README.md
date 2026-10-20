@@ -1,13 +1,13 @@
-# StarDroid: an Android-style OS for the Clockstar 2.0 and Watchy
+# Cool Watch OS: Android-style firmware for the Clockstar 2.0 and Watchy
 
-StarDroid is custom firmware for two open-source smartwatches:
+Cool Watch OS is custom firmware for two open-source smartwatches:
 
 - the [CircuitMess Clockstar 2.0](https://circuitmess.com/) (ESP32-S3,
   128×128 colour screen, 4 buttons)
 - the [SQFMI Watchy](https://watchy.sqfmi.com/) (ESP32, 200×200 black-and-white
   e-paper, 4 buttons), see [Watchy](#watchy)
 
-Both are microcontrollers, so real Android can't run on them. StarDroid copies Android and
+Both are microcontrollers, so real Android can't run on them. Cool Watch OS copies Android and
 Wear OS where it can: apps are **Activities** on a **back stack**, started with
 **Intents**, and the system UI has a status bar, a quick-settings shade,
 heads-up notifications, toasts and a power menu.
@@ -47,7 +47,7 @@ heads-up notifications, toasts and a power menu.
   snooze. Timers and alarms wake the watch from sleep.
 - **Tools**: calendar, bubble level, and a flashlight with white, red and warm
   modes.
-- **Games**: Snake and Star run, an endless runner starring the StarDroid sparkle.
+- **Games**: Snake and Star run, an endless runner starring the Cool Watch OS sparkle.
 - **Settings**: brightness, screen timeout, watch face, colour, sound, DND,
   24-hour time, time and date, step goal, battery, About watch, and reset.
   Tap *Build number* 7 times to unlock developer options.
@@ -71,21 +71,21 @@ your last 5 readings. It is not a medical device.
 | SELECT | App drawer (hold: change face) | Select / confirm |
 | BACK | Turn the screen off | Back (hold: power menu) |
 
-## Quick start: `./stardroid.sh`
+## Quick start: `./coolwatch.sh`
 
 One script does the whole job, and installs whatever is missing:
 
 ```sh
-./stardroid.sh            # install tools if needed, run the tests, build dist/stardroid-clockstar.bin
-./stardroid.sh flash      # build and flash the watch over USB (finds the port itself)
-./stardroid.sh deploy     # test, flash, then open the serial monitor
-./stardroid.sh sim        # run the desktop simulator
-./stardroid.sh test timer # run only the tests with "timer" in the name
-./stardroid.sh help       # every command
+./coolwatch.sh            # install tools if needed, run the tests, build dist/coolwatch-clockstar.bin
+./coolwatch.sh flash      # build and flash the watch over USB (finds the port itself)
+./coolwatch.sh deploy     # test, flash, then open the serial monitor
+./coolwatch.sh sim        # run the desktop simulator
+./coolwatch.sh test timer # run only the tests with "timer" in the name
+./coolwatch.sh help       # every command
 ```
 
 For a Watchy, add `--watch watchy` (or `watchy-v15` / `watchy-v10`) in front
-of any command, for example `./stardroid.sh --watch watchy flash`.
+of any command, for example `./coolwatch.sh --watch watchy flash`.
 
 It works on Linux (apt, dnf or pacman) and macOS (Homebrew). The rest of
 this README shows the same steps run by hand.
@@ -103,7 +103,7 @@ pio run -e watchy -t upload   # Watchy v2.0 (watchy-v15, watchy-v10 for older bo
 
 The ESP32-S3 flashes over its built-in USB, so no driver or button dance
 should be needed. Every CI run also attaches a
-merged `stardroid-clockstar.bin` that you can flash at offset `0x0` with
+merged `coolwatch-clockstar.bin` that you can flash at offset `0x0` with
 esptool or the [ESP web flasher](https://espressif.github.io/esptool-js/).
 
 **To go back to the stock firmware**, flash the image from the
@@ -125,7 +125,7 @@ The same OS runs on the [SQFMI Watchy](https://watchy.sqfmi.com/) kit
 It supports the v1.0, v1.5 and v2.0 boards; the revision is printed on the
 PCB. The newer ESP32-S3 Watchy v3 isn't supported yet.
 
-**Flashing:** `./stardroid.sh --watch watchy flash` (v2.0), or
+**Flashing:** `./coolwatch.sh --watch watchy flash` (v2.0), or
 `--watch watchy-v15` / `--watch watchy-v10`. These revisions differ in the UP
 button pin, the battery pin and the clock chip (DS3231 on v1.0, PCF8563
 later). The clock chip is detected automatically, but the pins come from the
@@ -159,7 +159,7 @@ two right-hand buttons are UP and DOWN.
   remembered and replayed, so they aren't lost.
 
 **Battery life:** the stock Watchy firmware deep-sleeps between minutes.
-StarDroid uses light sleep so timers, alarms and app state survive. Expect
+Cool Watch OS uses light sleep so timers, alarms and app state survive. Expect
 fewer days per charge than stock. It hasn't been measured on hardware yet.
 
 **To go back to the stock firmware**, flash one of the examples from the
@@ -178,18 +178,18 @@ backend, so you can work on the UI without flashing.
 ```sh
 sudo apt install libsdl2-dev        # or: brew install sdl2
 cmake -S sim -B build/sim && cmake --build build/sim -j
-./build/sim/stardroid-sim
+./build/sim/coolwatch-sim
 ```
 
 Keys: arrows for Up and Down, Enter or Right for Select, Esc or Left for Back.
 Add `--watchy` to simulate the Watchy's e-paper screen.
 
 The simulator also has a headless, scripted mode. It is used to render
-`docs/screenshots` (`sim/screenshots.sh build/sim/stardroid-sim`) and as a
+`docs/screenshots` (`sim/screenshots.sh build/sim/coolwatch-sim`) and as a
 smoke test in CI:
 
 ```sh
-./build/sim/stardroid-sim --out shots --script "w3300 s s p:setup"
+./build/sim/coolwatch-sim --out shots --script "w3300 s s p:setup"
 ```
 
 ## Testing
@@ -228,8 +228,8 @@ the whole suite takes about a second.
 
 ```sh
 cmake -S sim -B build/sim && cmake --build build/sim -j
-./build/sim/stardroid-tests            # everything
-./build/sim/stardroid-tests timer      # tests with "timer" in the name
+./build/sim/coolwatch-tests            # everything
+./build/sim/coolwatch-tests timer      # tests with "timer" in the name
 ctest --test-dir build/sim             # same, via CTest
 ```
 
@@ -293,16 +293,16 @@ and display offsets.
 
 ## License
 
-GPL-3.0, see [LICENSE](LICENSE). The StarDroid logo (a watch with a sparkle)
+GPL-3.0, see [LICENSE](LICENSE). The Cool Watch OS logo (a watch with a sparkle)
 and the Star run mascot are original artwork in this repository, under the
 same license.
 
 ## Trademarks
 
-StarDroid is an independent hobby project. It is not affiliated with,
+Cool Watch OS is an independent hobby project. It is not affiliated with,
 sponsored or endorsed by Google, CircuitMess or SQFMI. Android, Wear OS,
 Material Design, Pixel and Chrome are trademarks of Google LLC; this README
-mentions them only to describe the design ideas StarDroid borrows. StarDroid
+mentions them only to describe the design ideas Cool Watch OS borrows. Cool Watch OS
 contains no Google logos or artwork. Clockstar and Watchy are products of
 CircuitMess and SQFMI, and their names are used only to say which hardware this
 firmware runs on.

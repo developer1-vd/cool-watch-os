@@ -298,7 +298,7 @@ private:
 	}
 
 	void drawRunner(os::Canvas& c, int x, int base){
-		// The StarDroid sparkle, running on two legs
+		// The Cool Watch OS sparkle, running on two legs
 		const uint16_t fg = col::Text;
 		const bool duck = ducking && y == 0;
 		const bool step = ((int) distance / 6) % 2;

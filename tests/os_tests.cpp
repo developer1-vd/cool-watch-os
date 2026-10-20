@@ -1,11 +1,11 @@
-// StarDroid test program.
+// Cool Watch OS test program.
 //
 // Runs the real OS and apps on the headless simulator with a virtual clock and
 // scripted buttons. Each test runs in its own forked process, so global OS
 // state is fresh every time and a crash fails one test instead of the run.
 //
-//   stardroid-tests            run everything
-//   stardroid-tests timer      run tests whose name contains "timer"
+//   coolwatch-tests            run everything
+//   coolwatch-tests timer      run tests whose name contains "timer"
 #include "hal/SimControl.h"
 #include "os/Os.h"
 #include "os/Ui.h"

@@ -1,4 +1,4 @@
-// Boot animation: bouncing dots that settle into the StarDroid wordmark,
+// Boot animation: bouncing dots that settle into the Cool Watch OS wordmark,
 // with a light sweep across the wordmark.
 #include "Apps.h"
 #include <cmath>
@@ -65,19 +65,19 @@ public:
 		drawLogo(c, 64, logoY, 14, mint, col::Bg);
 
 		const uint16_t dim = blend(col::Bg, col::TextFaint, (uint8_t) (appear * 255));
-		text(c, "stardroid", 64, cy + 14, &fonts::Roboto_Thin_24, dim, textdatum_t::middle_center);
+		text(c, "coolwatch", 64, cy + 14, &fonts::Roboto_Thin_24, dim, textdatum_t::middle_center);
 
 		// Light sweep across the wordmark
 		const float sweep = (t - 1650) / 900.0f;
 		if(sweep > 0 && sweep < 1.4f){
 			const int x = (int) (10 + sweep * 110);
 			c.setClipRect(x - 12, cy, 24, 30);
-			text(c, "stardroid", 64, cy + 14, &fonts::Roboto_Thin_24, col::Text, textdatum_t::middle_center);
+			text(c, "coolwatch", 64, cy + 14, &fonts::Roboto_Thin_24, col::Text, textdatum_t::middle_center);
 			c.setClipRect(x - 5, cy, 10, 30);
-			text(c, "stardroid", 64, cy + 14, &fonts::Roboto_Thin_24, col::Mint, textdatum_t::middle_center);
+			text(c, "coolwatch", 64, cy + 14, &fonts::Roboto_Thin_24, col::Mint, textdatum_t::middle_center);
 			c.clearClipRect();
 		}else if(sweep >= 1.4f){
-			text(c, "stardroid", 64, cy + 14, &fonts::Roboto_Thin_24, col::Text, textdatum_t::middle_center);
+			text(c, "coolwatch", 64, cy + 14, &fonts::Roboto_Thin_24, col::Text, textdatum_t::middle_center);
 		}
 		text(c, hal::deviceName(), 64, os::H - 6, Small, dim, textdatum_t::bottom_center);
 	}

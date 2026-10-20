@@ -1,7 +1,7 @@
-// StarDroid simulator entry point.
+// Cool Watch OS simulator entry point.
 //
-//   stardroid-sim                      interactive SDL window
-//   stardroid-sim --script "..." --out DIR
+//   coolwatch-sim                      interactive SDL window
+//   coolwatch-sim --script "..." --out DIR
 //                                      headless, scripted, writes PPM frames
 //   --watchy                           run as a Watchy (200x200 e-paper)
 //
@@ -121,6 +121,6 @@ int main(int argc, char** argv){
 	}
 	if(!script.empty()) return headless(script, out);
 
-	printf("StarDroid simulator\n  Up/Down arrows: Up/Down\n  Enter/Space/Right: Select\n  Esc/Backspace/Left: Back\n");
+	printf("Cool Watch OS simulator\n  Up/Down arrows: Up/Down\n  Enter/Space/Right: Select\n  Esc/Backspace/Left: Back\n");
 	return lgfx::Panel_sdl::main(interactive);
 }

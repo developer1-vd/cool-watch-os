@@ -242,7 +242,7 @@ private:
 						case 3:
 							snprintf(buf[1], sizeof(buf[1]), "Revision %d", hal::revision());
 							return ListView::Row{ "Hardware", buf[1], col::Blue, icon::gear, -1 };
-						case 4: return ListView::Row{ "Build number", "SD1A.261018.001", col::Yellow, icon::code, -1 };
+						case 4: return ListView::Row{ "Build number", "CW1A.261018.001", col::Yellow, icon::code, -1 };
 						case 5: return ListView::Row{ "License", "GPL-3.0", col::Teal, icon::info, -1 };
 						default: return ListView::Row{ "Display", hal::features().screen, col::Purple, icon::watch, -1 };
 					}
