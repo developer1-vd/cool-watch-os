@@ -17,7 +17,7 @@ namespace col {
 	constexpr uint16_t Text = rgb(240, 242, 245);
 	constexpr uint16_t TextDim = rgb(160, 166, 175);
 	constexpr uint16_t TextFaint = rgb(95, 100, 108);
-	constexpr uint16_t AndroidGreen = rgb(61, 220, 132);
+	constexpr uint16_t Mint = rgb(61, 220, 132);
 	constexpr uint16_t Red = rgb(242, 107, 99);
 	constexpr uint16_t Orange = rgb(255, 167, 38);
 	constexpr uint16_t Yellow = rgb(255, 213, 79);
@@ -122,7 +122,7 @@ namespace icon {
 	void flashlight(Canvas& c, int cx, int cy, uint16_t fg);
 	void level(Canvas& c, int cx, int cy, uint16_t fg);
 	void snake(Canvas& c, int cx, int cy, uint16_t fg);
-	void dino(Canvas& c, int cx, int cy, uint16_t fg);
+	void runner(Canvas& c, int cx, int cy, uint16_t fg);
 	void calendar(Canvas& c, int cx, int cy, uint16_t fg);
 	void info(Canvas& c, int cx, int cy, uint16_t fg);
 	void battery(Canvas& c, int cx, int cy, uint16_t fg);
@@ -132,13 +132,18 @@ namespace icon {
 	void power(Canvas& c, int cx, int cy, uint16_t fg);
 	void restart(Canvas& c, int cx, int cy, uint16_t fg);
 	void palette(Canvas& c, int cx, int cy, uint16_t fg);
-	void android(Canvas& c, int cx, int cy, uint16_t fg);
+	void logo(Canvas& c, int cx, int cy, uint16_t fg);
 	void bell(Canvas& c, int cx, int cy, uint16_t fg);
 	void code(Canvas& c, int cx, int cy, uint16_t fg);
 	void watch(Canvas& c, int cx, int cy, uint16_t fg);
 	void check(Canvas& c, int cx, int cy, uint16_t fg);
 	void apps(Canvas& c, int cx, int cy, uint16_t fg);
 }
+
+// The StarDroid logo: a watch outline with a four-point sparkle. s is half
+// the width of the watch body; bg fills the face.
+void drawLogo(Canvas& c, int cx, int cy, int s, uint16_t fg, uint16_t bg);
+void sparkle(Canvas& c, int cx, int cy, int rx, int ry, uint16_t color);
 
 // Small battery glyph for status bars (w = 14)
 void batteryGlyph(Canvas& c, int x, int y, const hal::Battery& b, uint16_t fg);

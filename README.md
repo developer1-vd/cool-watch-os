@@ -14,7 +14,7 @@ heads-up notifications, toasts and a power menu.
 
 <p>
 <img src="docs/screenshots/boot.png" width="160">
-<img src="docs/screenshots/face-pixel.png" width="160">
+<img src="docs/screenshots/face-bold.png" width="160">
 <img src="docs/screenshots/face-analog.png" width="160">
 <img src="docs/screenshots/face-neon.png" width="160">
 <img src="docs/screenshots/quick-settings.png" width="160">
@@ -22,7 +22,7 @@ heads-up notifications, toasts and a power menu.
 <img src="docs/screenshots/fit.png" width="160">
 <img src="docs/screenshots/heart-rate.png" width="160">
 <img src="docs/screenshots/stopwatch.png" width="160">
-<img src="docs/screenshots/dino.png" width="160">
+<img src="docs/screenshots/star-run.png" width="160">
 </p>
 
 ## Features
@@ -30,10 +30,10 @@ heads-up notifications, toasts and a power menu.
 - **Boot animation** with bouncing dots and a light sweep across the wordmark.
 - **First-boot setup wizard**: welcome, time, date, 12/24 h, accent colour,
   watch face, daily step goal, and a tour of the buttons.
-- **5 watch faces**: Pixel, Analog (smooth sweeping second hand), Neon
+- **5 watch faces**: Bold, Analog (smooth sweeping second hand), Neon
   (seconds trace the screen edge), Rings, and Terminal (`adb shell` style).
   Hold SELECT on the face to change it.
-- **Material You-style accent colours**: Android green, Ocean, Lavender,
+- **Accent colours**: Mint, Ocean, Lavender,
   Coral, Sunny, Bubblegum.
 - **System UI**: status bar, quick-settings tiles (flashlight, brightness,
   sound, Do Not Disturb, theme, settings), notification list, heads-up
@@ -47,7 +47,7 @@ heads-up notifications, toasts and a power menu.
   snooze. Timers and alarms wake the watch from sleep.
 - **Tools**: calendar, bubble level, and a flashlight with white, red and warm
   modes.
-- **Games**: Snake and Dino run.
+- **Games**: Snake and Star run, an endless runner starring the StarDroid sparkle.
 - **Settings**: brightness, screen timeout, watch face, colour, sound, DND,
   24-hour time, time and date, step goal, battery, About watch, and reset.
   Tap *Build number* 7 times to unlock developer options.
@@ -112,7 +112,7 @@ esptool or the [ESP web flasher](https://espressif.github.io/esptool-js/).
 ## Watchy
 
 <p>
-<img src="docs/screenshots/watchy-face-pixel.png" width="160">
+<img src="docs/screenshots/watchy-face-bold.png" width="160">
 <img src="docs/screenshots/watchy-face-analog.png" width="160">
 <img src="docs/screenshots/watchy-face-terminal.png" width="160">
 <img src="docs/screenshots/watchy-quick-settings.png" width="160">
@@ -150,7 +150,7 @@ two right-hand buttons are UP and DOWN.
   e-paper ghosting. One also runs automatically every 30 ambient updates.
 - **No backlight, buzzer or LEDs:** sounds become vibrations, so the
   quick-settings tiles and Settings change to match. The Flashlight and the
-  fast-paced Dino game are hidden; Snake runs slower. The colour picker is
+  fast-paced Star run game are hidden; Snake runs slower. The colour picker is
   skipped, and Diagnostics tests vibration instead of the buzzer and skips the
   backlight and LED stages.
 - **Heart rate** keeps its screen still while you tap. An e-paper refresh
@@ -293,4 +293,16 @@ and display offsets.
 
 ## License
 
-GPL-3.0, see [LICENSE](LICENSE).
+GPL-3.0, see [LICENSE](LICENSE). The StarDroid logo (a watch with a sparkle)
+and the Star run mascot are original artwork in this repository, under the
+same license.
+
+## Trademarks
+
+StarDroid is an independent hobby project. It is not affiliated with,
+sponsored or endorsed by Google, CircuitMess or SQFMI. Android, Wear OS,
+Material Design, Pixel and Chrome are trademarks of Google LLC; this README
+mentions them only to describe the design ideas StarDroid borrows. StarDroid
+contains no Google logos or artwork. Clockstar and Watchy are products of
+CircuitMess and SQFMI, and their names are used only to say which hardware this
+firmware runs on.

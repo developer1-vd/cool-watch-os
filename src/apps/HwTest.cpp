@@ -224,7 +224,7 @@ private:
 	}
 
 	void ask(os::Canvas& c){
-		c.fillSmoothRoundRect(8, 104, 54, 18, 9, col::AndroidGreen);
+		c.fillSmoothRoundRect(8, 104, 54, 18, 9, col::Mint);
 		text(c, "SEL ok", 35, 113, Small, col::Bg, textdatum_t::middle_center);
 		c.fillSmoothRoundRect(66, 104, 54, 18, 9, col::Red);
 		text(c, "DN bad", 93, 113, Small, col::Bg, textdatum_t::middle_center);
@@ -262,7 +262,7 @@ private:
 			// Gradient and a 1 px grid catch dead pixels and wrong offsets.
 			for(int x = 0; x < os::W; x++){
 				c.drawFastVLine(x, 0, 40, blend(col::Bg, col::Red, x * 2));
-				c.drawFastVLine(x, 40, 40, blend(col::Bg, col::AndroidGreen, x * 2));
+				c.drawFastVLine(x, 40, 40, blend(col::Bg, col::Mint, x * 2));
 				c.drawFastVLine(x, 80, 48, blend(col::Bg, col::Blue, x * 2));
 			}
 			c.drawRect(0, 0, os::W, os::H, col::Text);
@@ -281,7 +281,7 @@ private:
 		const auto t = os::localTime();
 		auto row = [&](int y, const char* label, const char* value, int state){
 			text(c, label, 6, y, Small, col::TextDim);
-			text(c, value, 122, y, Small, state < 0 ? col::Text : (state ? col::AndroidGreen : col::Red), textdatum_t::top_right);
+			text(c, value, 122, y, Small, state < 0 ? col::Text : (state ? col::Mint : col::Red), textdatum_t::top_right);
 		};
 		const int sRtc = sensorsScored ? rtcOk : -1;
 		const int sImu = sensorsScored ? imuOk : -1;
@@ -307,14 +307,14 @@ private:
 		const bool ok = passed == applicableCount();
 		char buf[24];
 		snprintf(buf, sizeof(buf), "%d/%d passed", passed, applicableCount());
-		text(c, buf, 64, 15, Body, ok ? col::AndroidGreen : col::Red, textdatum_t::top_center);
+		text(c, buf, 64, 15, Body, ok ? col::Mint : col::Red, textdatum_t::top_center);
 		int row = 0;
 		for(int i = 0; i < Summary; i++){
 			if(!applicable(i)) continue;
 			const int y = 33 + row++ * 13;
 			text(c, stageName(i), 14, y, Small, col::Text);
 			const bool pass = results[i] == Result::Pass;
-			text(c, pass ? "PASS" : "FAIL", 114, y, Small, pass ? col::AndroidGreen : col::Red, textdatum_t::top_right);
+			text(c, pass ? "PASS" : "FAIL", 114, y, Small, pass ? col::Mint : col::Red, textdatum_t::top_right);
 		}
 		hint(c, "SEL retest  BACK exit");
 	}

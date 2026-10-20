@@ -13,7 +13,7 @@ const lgfx::IFont* Huge = &fonts::DejaVu40;
 namespace {
 
 const Accent Accents[] = {
-	{ "Android", col::AndroidGreen, rgb(10, 70, 40) },
+	{ "Mint", col::Mint, rgb(10, 70, 40) },
 	{ "Ocean", col::Blue, rgb(22, 48, 92) },
 	{ "Lavender", col::Purple, rgb(62, 44, 110) },
 	{ "Coral", col::Red, rgb(100, 30, 26) },
@@ -343,13 +343,11 @@ void snake(Canvas& c, int x, int y, uint16_t fg){
 	c.fillCircle(x - 5, y - 5, 1, fg);
 }
 
-void dino(Canvas& c, int x, int y, uint16_t fg){
-	c.fillRect(x, y - 7, 7, 5, fg);
-	c.fillRect(x - 4, y - 3, 7, 6, fg);
-	c.fillRect(x - 7, y - 2, 3, 3, fg);
-	c.fillRect(x - 3, y + 3, 2, 4, fg);
-	c.fillRect(x + 1, y + 3, 2, 4, fg);
-	c.fillRect(x + 3, y - 1, 2, 2, fg);
+void runner(Canvas& c, int x, int y, uint16_t fg){
+	// The sparkle mascot mid-stride
+	sparkle(c, x, y - 2, 6, 6, fg);
+	c.drawWideLine(x - 1, y + 2, x - 4, y + 7, 1, fg);
+	c.drawWideLine(x + 1, y + 2, x + 4, y + 6, 1, fg);
 }
 
 void calendar(Canvas& c, int x, int y, uint16_t fg){
@@ -412,14 +410,12 @@ void palette(Canvas& c, int x, int y, uint16_t fg){
 	c.fillCircle(x - 1, y + 4, 2, bg);
 }
 
-void android(Canvas& c, int x, int y, uint16_t fg){
-	// The bugdroid head
-	c.fillArc(x, y + 3, 0, 8, 180, 360, fg);
-	const uint16_t bg = fg == col::Bg ? col::Text : col::Bg;
-	c.fillCircle(x - 3, y, 1, bg);
-	c.fillCircle(x + 3, y, 1, bg);
-	c.drawLine(x - 5, y - 4, x - 7, y - 7, fg);
-	c.drawLine(x + 5, y - 4, x + 7, y - 7, fg);
+void logo(Canvas& c, int x, int y, uint16_t fg){
+	c.fillRect(x - 3, y - 8, 7, 3, fg);
+	c.fillRect(x - 3, y + 6, 7, 3, fg);
+	c.drawRoundRect(x - 6, y - 6, 13, 13, 4, fg);
+	c.drawRoundRect(x - 5, y - 5, 11, 11, 3, fg);
+	sparkle(c, x, y, 3, 3, fg);
 }
 
 void code(Canvas& c, int x, int y, uint16_t fg){
@@ -452,12 +448,31 @@ void apps(Canvas& c, int x, int y, uint16_t fg){
 
 }
 
+void sparkle(Canvas& c, int cx, int cy, int rx, int ry, uint16_t color){
+	// Four slim points meeting in the middle
+	const int kx = rx * 3 / 10 + 1, ky = ry * 3 / 10 + 1;
+	c.fillTriangle(cx, cy - ry, cx - kx, cy, cx + kx, cy, color);
+	c.fillTriangle(cx, cy + ry, cx - kx, cy, cx + kx, cy, color);
+	c.fillTriangle(cx - rx, cy, cx, cy - ky, cx, cy + ky, color);
+	c.fillTriangle(cx + rx, cy, cx, cy - ky, cx, cy + ky, color);
+}
+
+void drawLogo(Canvas& c, int cx, int cy, int s, uint16_t fg, uint16_t bg){
+	const int strapW = s * 11 / 10, strapH = s / 2 + 1;
+	c.fillSmoothRoundRect(cx - strapW / 2, cy - s - strapH + 2, strapW, strapH, 2, fg);
+	c.fillSmoothRoundRect(cx - strapW / 2, cy + s - 2, strapW, strapH, 2, fg);
+	const int r = s * 9 / 20, t = s / 6 > 2 ? s / 6 : 2;
+	c.fillSmoothRoundRect(cx - s, cy - s, s * 2, s * 2, r, fg);
+	c.fillSmoothRoundRect(cx - s + t, cy - s + t, (s - t) * 2, (s - t) * 2, r - t > 1 ? r - t : 1, bg);
+	sparkle(c, cx, cy, s * 6 / 10, s * 6 / 10, fg);
+}
+
 void batteryGlyph(Canvas& c, int x, int y, const hal::Battery& b, uint16_t fg){
 	c.drawRoundRect(x, y, 12, 7, 1, fg);
 	c.fillRect(x + 12, y + 2, 2, 3, fg);
 	const int w = (b.percent * 8 + 50) / 100;
 	uint16_t fill = b.percent <= 15 ? col::Red : fg;
-	if(b.charging) fill = col::AndroidGreen;
+	if(b.charging) fill = col::Mint;
 	c.fillRect(x + 2, y + 2, w, 3, fill);
 }
 

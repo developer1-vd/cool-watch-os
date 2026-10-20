@@ -1,4 +1,4 @@
-// Games: Snake and an offline-dinosaur style runner.
+// Games: Snake and Star run, an endless runner.
 #include "Apps.h"
 #include <cmath>
 #include <cstdio>
@@ -144,12 +144,12 @@ private:
 	}
 };
 
-// ---- Dino runner ---------------------------------------------------------------------
+// ---- Star run ------------------------------------------------------------------------
 
-class Dino : public os::Activity {
+class Runner : public os::Activity {
 public:
 	void onCreate(const os::Intent&) override {
-		best = hal::prefGet("dinoHi", 0);
+		best = hal::prefGet("runHi", 0);
 		reset();
 	}
 
@@ -178,18 +178,18 @@ public:
 		cloudX -= speed * s * 0.2f;
 		if(cloudX < -30) cloudX = 140;
 
-		// Collision (dino box)
+		// Collision (runner box)
 		const int dh = ducking && y == 0 ? 10 : 18;
 		const int dTop = Ground - dh + (int) y, dBottom = Ground + (int) y;
 		for(auto& o : obstacles){
 			const int ox0 = (int) o.x, ox1 = ox0 + o.w;
 			const int oy0 = o.bird ? Ground - 22 : Ground - o.h;
 			const int oy1 = o.bird ? Ground - 14 : Ground;
-			if(ox1 > DinoX + 3 && ox0 < DinoX + 14 && oy1 > dTop + 2 && oy0 < dBottom){
+			if(ox1 > RunnerX + 3 && ox0 < RunnerX + 14 && oy1 > dTop + 2 && oy0 < dBottom){
 				over = true;
 				if(score > best){
 					best = score;
-					hal::prefSet("dinoHi", best);
+					hal::prefSet("runHi", best);
 				}
 				os::play(os::Sound::Error);
 			}
@@ -231,7 +231,7 @@ public:
 		c.fillSmoothRoundRect((int) cloudX, 28, 24, 7, 3, col::Surface2);
 		c.fillSmoothCircle((int) cloudX + 10, 27, 5, col::Surface2);
 
-		drawDino(c, DinoX, Ground + (int) y);
+		drawRunner(c, RunnerX, Ground + (int) y);
 
 		for(auto& o : obstacles){
 			if(o.bird){
@@ -242,9 +242,9 @@ public:
 				c.fillRect(bx, by + 1, 3, 2, fg);
 			}else{
 				const int ox = (int) o.x;
-				c.fillRoundRect(ox + o.w / 2 - 2, Ground - o.h, 5, o.h, 2, col::AndroidGreen);
-				c.fillRoundRect(ox, Ground - o.h + 4, 3, 6, 1, col::AndroidGreen);
-				c.fillRoundRect(ox + o.w - 3, Ground - o.h + 2, 3, 6, 1, col::AndroidGreen);
+				c.fillRoundRect(ox + o.w / 2 - 2, Ground - o.h, 5, o.h, 2, col::Mint);
+				c.fillRoundRect(ox, Ground - o.h + 4, 3, 6, 1, col::Mint);
+				c.fillRoundRect(ox + o.w - 3, Ground - o.h + 2, 3, 6, 1, col::Mint);
 			}
 		}
 
@@ -260,7 +260,7 @@ public:
 	}
 
 private:
-	static constexpr int Ground = 90, DinoX = 14;
+	static constexpr int Ground = 90, RunnerX = 14;
 	struct Obstacle {
 		float x;
 		int w, h;
@@ -297,33 +297,30 @@ private:
 		o.h = o.bird ? 8 : 12 + rand() % 10;
 	}
 
-	void drawDino(os::Canvas& c, int x, int base){
+	void drawRunner(os::Canvas& c, int x, int base){
+		// The StarDroid sparkle, running on two legs
 		const uint16_t fg = col::Text;
 		const bool duck = ducking && y == 0;
 		const bool step = ((int) distance / 6) % 2;
 		if(duck){
-			c.fillRect(x, base - 10, 18, 7, fg);
-			c.fillRect(x + 14, base - 12, 8, 6, fg);
-			c.fillRect(x + 18, base - 11, 1, 1, col::Bg);
-		}else{
-			c.fillRect(x + 6, base - 20, 10, 7, fg);       // head
-			c.fillRect(x + 8, base - 19, 1, 1, col::Bg);   // eye
-			c.fillRect(x + 12, base - 15, 4, 1, col::Bg);  // mouth
-			c.fillRect(x + 2, base - 14, 9, 9, fg);        // body
-			c.fillRect(x - 1, base - 13, 3, 4, fg);        // tail
-			c.fillRect(x + 11, base - 12, 2, 2, fg);       // arm
+			sparkle(c, x + 9, base - 6, 10, 5, fg);
+			c.fillCircle(x + 9, base - 6, 3, fg);
+			return;
 		}
+		sparkle(c, x + 8, base - 13, 8, 8, fg);
+		c.fillCircle(x + 8, base - 13, 3, fg);
+		c.fillRect(x + 10, base - 14, 1, 1, col::Bg); // eye
 		if(!playing || y < 0){
-			c.fillRect(x + 3, base - 5, 2, 5, fg);
-			c.fillRect(x + 8, base - 5, 2, 5, fg);
+			c.drawWideLine(x + 6, base - 7, x + 5, base - 1, 1, fg);
+			c.drawWideLine(x + 10, base - 7, x + 11, base - 1, 1, fg);
 		}else{
-			c.fillRect(x + 3, base - 5, 2, step ? 5 : 3, fg);
-			c.fillRect(x + 8, base - 5, 2, step ? 3 : 5, fg);
+			c.drawWideLine(x + 6, base - 7, step ? x + 3 : x + 6, base - 1, 1, fg);
+			c.drawWideLine(x + 10, base - 7, step ? x + 10 : x + 13, base - 1, 1, fg);
 		}
 	}
 };
 
 }
 
-const os::AppInfo apps::Snake = { "snake", "Snake", col::AndroidGreen, icon::snake, os::make<::Snake>, true };
-const os::AppInfo apps::Dino = { "dino", "Dino run", col::TextDim, icon::dino, os::make<::Dino>, true, os::NeedsFastDisplay };
+const os::AppInfo apps::Snake = { "snake", "Snake", col::Mint, icon::snake, os::make<::Snake>, true };
+const os::AppInfo apps::Runner = { "runner", "Star run", col::Purple, icon::runner, os::make<::Runner>, true, os::NeedsFastDisplay };

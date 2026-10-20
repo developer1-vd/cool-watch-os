@@ -16,7 +16,7 @@ constexpr int StatusBarH = 12;
 
 constexpr const char* Name = "StarDroid";
 constexpr const char* Version = "1.0";
-constexpr const char* Codename = "Cupcake";
+constexpr const char* Codename = "Comet";
 
 // ---- Input -----------------------------------------------------------------
 

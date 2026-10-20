@@ -1,5 +1,5 @@
 // Boot animation: bouncing dots that settle into the StarDroid wordmark,
-// with the light sweep Android boot animations are known for.
+// with a light sweep across the wordmark.
 #include "Apps.h"
 #include <cmath>
 
@@ -32,7 +32,7 @@ public:
 	void onDraw(os::Canvas& c) override {
 		// E-paper can't animate: show the finished logo straight away.
 		const uint32_t t = mono() ? 2900 : hal::millis() - start;
-		const uint16_t colors[] = { col::Blue, col::Red, col::Yellow, col::AndroidGreen };
+		const uint16_t colors[] = { col::Mint, col::Teal, col::Blue, col::Purple };
 		const int cy = os::H / 2;
 
 		if(t < 1300){
@@ -47,26 +47,22 @@ public:
 			return;
 		}
 
-		// Dots slide together into the bugdroid
+		// Dots slide together into the sparkle at the centre of the logo
+		const int logoY = cy - 18;
 		const float m = fminf(1.0f, (t - 1300) / 350.0f);
 		const float e = 1 - (1 - m) * (1 - m);
 		if(m < 1){
 			for(int i = 0; i < 4; i++){
 				const int x0 = 37 + i * 18;
 				const int x = (int) (x0 + (64 - x0) * e);
-				c.fillSmoothCircle(x, cy - (int) (e * 16), (int) (5 + e * 3), colors[i]);
+				c.fillSmoothCircle(x, cy + (int) ((logoY - cy) * e), (int) (5 - e * 2), colors[i]);
 			}
 			return;
 		}
 
 		const float appear = fminf(1.0f, (t - 1650) / 250.0f);
-		const uint16_t green = blend(col::Bg, col::AndroidGreen, (uint8_t) (appear * 255));
-		// Bugdroid head, scaled up
-		c.fillArc(64, cy - 6, 0, 18, 180, 360, green);
-		c.fillCircle(57, cy - 14, 2, col::Bg);
-		c.fillCircle(71, cy - 14, 2, col::Bg);
-		c.drawWideLine(53, cy - 21, 49, cy - 28, 1.2f, green);
-		c.drawWideLine(75, cy - 21, 79, cy - 28, 1.2f, green);
+		const uint16_t mint = blend(col::Bg, col::Mint, (uint8_t) (appear * 255));
+		drawLogo(c, 64, logoY, 14, mint, col::Bg);
 
 		const uint16_t dim = blend(col::Bg, col::TextFaint, (uint8_t) (appear * 255));
 		text(c, "stardroid", 64, cy + 14, &fonts::Roboto_Thin_24, dim, textdatum_t::middle_center);
@@ -78,7 +74,7 @@ public:
 			c.setClipRect(x - 12, cy, 24, 30);
 			text(c, "stardroid", 64, cy + 14, &fonts::Roboto_Thin_24, col::Text, textdatum_t::middle_center);
 			c.setClipRect(x - 5, cy, 10, 30);
-			text(c, "stardroid", 64, cy + 14, &fonts::Roboto_Thin_24, col::AndroidGreen, textdatum_t::middle_center);
+			text(c, "stardroid", 64, cy + 14, &fonts::Roboto_Thin_24, col::Mint, textdatum_t::middle_center);
 			c.clearClipRect();
 		}else if(sweep >= 1.4f){
 			text(c, "stardroid", 64, cy + 14, &fonts::Roboto_Thin_24, col::Text, textdatum_t::middle_center);
@@ -94,4 +90,4 @@ private:
 
 }
 
-const os::AppInfo apps::Boot = { "boot", "Boot", col::AndroidGreen, nullptr, os::make<BootAnimation>, false };
+const os::AppInfo apps::Boot = { "boot", "Boot", col::Mint, nullptr, os::make<BootAnimation>, false };

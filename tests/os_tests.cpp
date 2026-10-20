@@ -828,16 +828,16 @@ TEST(watchy_drawer_hides_apps_it_cannot_run){
 		const auto& a = os::app(i);
 		if(a.inDrawer && os::appAvailable(a)) available++;
 	}
-	CHECK_EQ(available, 9); // no Flashlight (no backlight), no Dino (too fast for e-paper)
+	CHECK_EQ(available, 9); // no Flashlight (no backlight), no Star run (too fast for e-paper)
 	CHECK(!os::appAvailable(*os::findApp("flashlight")));
-	CHECK(!os::appAvailable(*os::findApp("dino")));
+	CHECK(!os::appAvailable(*os::findApp("runner")));
 	CHECK(os::appAvailable(*os::findApp("snake")));
 }
 
 TEST(watchy_only_refreshes_when_the_image_changes){
 	bootWatchy();
 	const int before = sim::refreshCount();
-	run(5000); // Pixel face has no seconds: nothing should change
+	run(5000); // Bold face has no seconds: nothing should change
 	CHECK_EQ(sim::refreshCount(), before);
 	press(Button::Select); // open the drawer
 	run(500);

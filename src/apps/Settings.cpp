@@ -234,16 +234,16 @@ private:
 				list.set(7, [](void*, int i){
 					static char buf[2][24];
 					switch(i){
-						case 0: return ListView::Row{ "Device", hal::deviceName(), col::AndroidGreen, icon::watch, -1 };
+						case 0: return ListView::Row{ "Device", hal::deviceName(), col::Mint, icon::watch, -1 };
 						case 1:
 							snprintf(buf[0], sizeof(buf[0]), "%s %s", os::Name, os::Version);
-							return ListView::Row{ "Software", buf[0], col::AndroidGreen, icon::android, -1 };
+							return ListView::Row{ "Software", buf[0], col::Mint, icon::logo, -1 };
 						case 2: return ListView::Row{ "Codename", os::Codename, col::Pink, icon::info, -1 };
 						case 3:
 							snprintf(buf[1], sizeof(buf[1]), "Revision %d", hal::revision());
 							return ListView::Row{ "Hardware", buf[1], col::Blue, icon::gear, -1 };
 						case 4: return ListView::Row{ "Build number", "SD1A.261018.001", col::Yellow, icon::code, -1 };
-						case 5: return ListView::Row{ "Inspired by", "Android & Wear OS", col::Teal, icon::android, -1 };
+						case 5: return ListView::Row{ "License", "GPL-3.0", col::Teal, icon::info, -1 };
 						default: return ListView::Row{ "Display", hal::features().screen, col::Purple, icon::watch, -1 };
 					}
 				}, nullptr);
@@ -286,7 +286,7 @@ private:
 				case ITimeout:
 					snprintf(d, 16, "After %ds", s.screenTimeout);
 					return ListView::Row{ "Screen off", d, col::Blue, icon::clock, -1 };
-				case IFace: return ListView::Row{ "Watch face", apps::face(s.watchFace).name, col::AndroidGreen, icon::watch, -1 };
+				case IFace: return ListView::Row{ "Watch face", apps::face(s.watchFace).name, col::Mint, icon::watch, -1 };
 				case ITheme: return ListView::Row{ "Colour", accent().name, accent().primary, icon::palette, -1 };
 				case IPaper: return ListView::Row{ "Paper mode", nullptr, col::Text, icon::sun, (int8_t) s.paper };
 				case ISound: return ListView::Row{ hal::features().buzzer ? "Sound" : "Vibration", nullptr, col::Orange, icon::sound, (int8_t) s.sound };
@@ -296,13 +296,13 @@ private:
 				case IDate: return ListView::Row{ "Set date", nullptr, col::Blue, icon::calendar, -1 };
 				case IGoal:
 					snprintf(d, 16, "%u", s.stepGoal);
-					return ListView::Row{ "Step goal", d, col::AndroidGreen, icon::steps, -1 };
+					return ListView::Row{ "Step goal", d, col::Mint, icon::steps, -1 };
 				case IBattery:
 					snprintf(d, 16, "%d%%", hal::battery().percent);
-					return ListView::Row{ "Battery", d, col::AndroidGreen, icon::battery, -1 };
+					return ListView::Row{ "Battery", d, col::Mint, icon::battery, -1 };
 				case IDiagnostics: return ListView::Row{ "Diagnostics", "Hardware test", col::Teal, icon::check, -1 };
 				case IAbout: return ListView::Row{ "About watch", nullptr, col::TextDim, icon::info, -1 };
-				case IDeveloper: return ListView::Row{ "Developer", nullptr, col::AndroidGreen, icon::code, -1 };
+				case IDeveloper: return ListView::Row{ "Developer", nullptr, col::Mint, icon::code, -1 };
 				default: return ListView::Row{ "Reset watch", nullptr, col::Red, icon::restart, -1 };
 			}
 		}, this);

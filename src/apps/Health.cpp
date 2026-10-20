@@ -185,7 +185,7 @@ public:
 				text(c, buf, 56, 88, &fonts::DejaVu24, col::Text, textdatum_t::middle_right);
 				text(c, "bpm", 60, 92, Small, col::TextDim, textdatum_t::middle_left);
 				const char* zone = bpm < 60 ? "Low" : (bpm <= 100 ? "Normal resting" : "Elevated");
-				const uint16_t zc = bpm < 60 ? col::Blue : (bpm <= 100 ? col::AndroidGreen : col::Orange);
+				const uint16_t zc = bpm < 60 ? col::Blue : (bpm <= 100 ? col::Mint : col::Orange);
 				text(c, zone, 64, 108, Small, zc, textdatum_t::middle_center);
 				drawHistory(c);
 				break;
@@ -266,5 +266,5 @@ private:
 
 }
 
-const os::AppInfo apps::Fit = { "fit", "Fit", col::AndroidGreen, icon::steps, os::make<::Fit>, true };
+const os::AppInfo apps::Fit = { "fit", "Fit", col::Mint, icon::steps, os::make<::Fit>, true };
 const os::AppInfo apps::Heart = { "heart", "Heart rate", col::Red, icon::heart, os::make<::Heart>, true };

@@ -7,7 +7,7 @@ void os::registerApps(){
 		registerApp(*a);
 	}
 	// App drawer, in display order
-	for(const auto* a : { &Fit, &Heart, &Stopwatch, &Timer, &Alarm, &Calendar, &Flashlight, &Level, &Snake, &Dino, &apps::Settings }){
+	for(const auto* a : { &Fit, &Heart, &Stopwatch, &Timer, &Alarm, &Calendar, &Flashlight, &Level, &Snake, &Runner, &apps::Settings }){
 		registerApp(*a);
 	}
 	startTimerService();
