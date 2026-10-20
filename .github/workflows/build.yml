@@ -1,0 +1,42 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  firmware:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        watch: [clockstar, watchy, watchy-v15, watchy-v10]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ hashFiles('platformio.ini') }}
+      - run: pip install platformio
+      - name: Build and merge a single flashable image
+        run: ./stardroid.sh --watch ${{ matrix.watch }} image
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stardroid-${{ matrix.watch }}
+          path: dist/stardroid-${{ matrix.watch }}.bin
+
+  simulator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libsdl2-dev
+      - name: Build and run the test program
+        run: ./stardroid.sh test
+      - name: Headless smoke test (boot, setup, open every app)
+        run: |
+          mkdir -p out
+          ./build/sim/stardroid-sim --out out --script "w3300 s s s s s s s s s s s s s s w2600 p:home s w400 d d d d d d d d d d s w500 p:settings"
+          ./build/sim/stardroid-sim --watchy --out out --script "w3300 s s s s s s s s s s w2600 p:watchy-home"
+          test -s out/home.ppm && test -s out/settings.ppm && test -s out/watchy-home.ppm

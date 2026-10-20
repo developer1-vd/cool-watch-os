@@ -33,3 +33,10 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# PlatformIO / simulator builds
+.pio/
+build/
+
+# Helper script output
+dist/
