@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Regenerates docs/screenshots from the headless simulator.
-# Usage: sim/screenshots.sh path/to/stardroid-sim
+# Usage: sim/screenshots.sh path/to/coolwatch-sim
 set -euo pipefail
-SIM=${1:?path to stardroid-sim}
+SIM=${1:?path to coolwatch-sim}
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 OUT=$(mktemp -d)
 DOCS="$ROOT/docs/screenshots"
@@ -14,7 +14,7 @@ app(){ local s="s w300"; for _ in $(seq 1 "$1"); do s="$s d"; done; echo "$s w30
 run(){ "$SIM" --out "$OUT" --script "$1"; }
 
 run "w2900 p:boot w1200 p:welcome s p:setup-time s s s s s s p:setup-theme d w400 p:setup-theme2 s s s p:setup-tour"
-run "$SETUP p:face-pixel S w400 d w300 p:face-analog d w300 p:face-neon d w300 p:face-rings d w300 p:face-terminal"
+run "$SETUP p:face-bold S w400 d w300 p:face-analog d w300 p:face-neon d w300 p:face-rings d w300 p:face-terminal"
 run "$SETUP u w400 p:quick-settings b w400 d w400 p:notifications b w400 s w400 d w300 p:drawer"
 run "$SETUP B w500 p:power-menu"
 run "$SETUP $(app 0) w1500 p:fit d w500 p:fit-week"
@@ -25,14 +25,14 @@ run "$SETUP $(app 4) d s s w300 w2000 p:alarm"
 run "$SETUP $(app 5) p:calendar"
 run "$SETUP $(app 7) w800 p:level"
 run "$SETUP $(app 8) s w4000 p:snake"
-run "$SETUP $(app 9) s w2500 s w300 p:dino"
+run "$SETUP $(app 9) s w2500 s w300 p:star-run"
 run "$SETUP $(app 10) p:settings"
 run "$SETUP $(app 10) u w300 u w300 u w300 s w500 u d s b w800 s w300 s w300 s w300 s w3600 p:diagnostics-sensors s w500 p:diagnostics"
 
 # Watchy (e-paper). Setup has no colour step there, so one Select fewer.
 WSETUP="w3300 s s s s s s s s s s w2600"
 wrun(){ "$SIM" --watchy --out "$OUT" --script "$1"; }
-wrun "$WSETUP p:watchy-face-pixel S w300 d w300 p:watchy-face-analog d p:watchy-face-neon d d p:watchy-face-terminal s w300 b w300 w20000 p:watchy-ambient"
+wrun "$WSETUP p:watchy-face-bold S w300 d w300 p:watchy-face-analog d p:watchy-face-neon d d p:watchy-face-terminal s w300 b w300 w20000 p:watchy-ambient"
 wrun "$WSETUP u w300 p:watchy-quick-settings b d w300 b s w300 d w300 p:watchy-drawer"
 wrun "$WSETUP $(app 0) w1000 p:watchy-fit"
 wrun "$WSETUP $(app 2) s w7300 d w2400 p:watchy-stopwatch"

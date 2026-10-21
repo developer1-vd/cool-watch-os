@@ -178,7 +178,7 @@ private:
 
 }
 
-const os::AppInfo apps::Launcher = { "launcher", "Watch face", col::AndroidGreen, icon::watch, os::make<::Launcher>, false };
-const os::AppInfo apps::FacePicker = { "facepicker", "Watch faces", col::AndroidGreen, icon::watch, os::make<::FacePicker>, false };
-const os::AppInfo apps::Drawer = { "drawer", "Apps", col::AndroidGreen, icon::apps, os::make<::Drawer>, false };
+const os::AppInfo apps::Launcher = { "launcher", "Watch face", col::Mint, icon::watch, os::make<::Launcher>, false };
+const os::AppInfo apps::FacePicker = { "facepicker", "Watch faces", col::Mint, icon::watch, os::make<::FacePicker>, false };
+const os::AppInfo apps::Drawer = { "drawer", "Apps", col::Mint, icon::apps, os::make<::Drawer>, false };
 const os::AppInfo apps::Notifications = { "notifications", "Notifications", col::Blue, icon::bell, os::make<::Notifications>, false };

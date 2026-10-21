@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# StarDroid helper: one script for the whole build / test / flash loop.
+# Cool Watch OS helper: one script for the whole build / test / flash loop.
 #
-#   ./stardroid.sh                   install what's missing, run tests, build firmware
-#   ./stardroid.sh --watch watchy    same, for a Watchy
-#   ./stardroid.sh help              list every command
+#   ./coolwatch.sh                   install what's missing, run tests, build firmware
+#   ./coolwatch.sh --watch watchy    same, for a Watchy
+#   ./coolwatch.sh help              list every command
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -97,7 +97,7 @@ cmd_setup(){
 cmd_doctor(){
 	step "Checking your setup"
 	local missing=0
-	if has_pio; then ok "PlatformIO $(pio --version | awk '{print $NF}')"; else warn "PlatformIO missing (./stardroid.sh setup)"; missing=1; fi
+	if has_pio; then ok "PlatformIO $(pio --version | awk '{print $NF}')"; else warn "PlatformIO missing (./coolwatch.sh setup)"; missing=1; fi
 	if have cmake; then ok "$(cmake --version | head -1)"; else warn "CMake missing"; missing=1; fi
 	if has_sdl; then ok "SDL2 found"; else warn "SDL2 missing"; missing=1; fi
 	if have git; then ok "$(git --version)"; else warn "git missing (CMake fetches LovyanGFX with it)"; missing=1; fi
@@ -128,7 +128,7 @@ cmd_image(){
 	# The original ESP32 (Watchy) puts its bootloader at 0x1000, the S3 at 0x0.
 	local chip=esp32s3 boot=0x0
 	if is_watchy; then chip=esp32 boot=0x1000; fi
-	local out="$DIST/stardroid-$WATCH.bin" build
+	local out="$DIST/coolwatch-$WATCH.bin" build
 	build=$(fw_build)
 	python3 "$esptool" --chip "$chip" merge_bin -o "$out" \
 		--flash_mode dio --flash_size 4MB \
@@ -151,7 +151,7 @@ pick_port(){
 	ports=$(list_ports)
 	[[ -n "$ports" ]] || die "No watch found. Plug it in with a USB data cable (not a charge-only one)."
 	if [[ $(echo "$ports" | wc -l) -gt 1 ]]; then
-		warn "Several serial ports found, using the first. Pass one explicitly: ./stardroid.sh flash /dev/ttyACM1" >&2
+		warn "Several serial ports found, using the first. Pass one explicitly: ./coolwatch.sh flash /dev/ttyACM1" >&2
 	fi
 	echo "$ports" | head -1
 }
@@ -162,7 +162,7 @@ cmd_flash(){
 	port=$(pick_port "${1:-}")
 	step "Building and flashing $WATCH on $port"
 	(cd "$ROOT" && pio run -e "$WATCH" -t upload --upload-port "$port")
-	ok "Flashed. The watch restarts into StarDroid."
+	ok "Flashed. The watch restarts into Cool Watch OS."
 }
 
 cmd_monitor(){
@@ -189,16 +189,16 @@ build_sim(){
 cmd_test(){
 	build_sim
 	step "Running the test program"
-	"$SIM_BUILD/stardroid-tests" "$@"
+	"$SIM_BUILD/coolwatch-tests" "$@"
 }
 
 cmd_sim(){
 	build_sim
 	step "Starting the $WATCH simulator (arrows = Up/Down, Enter = Select, Esc = Back)"
 	if is_watchy; then
-		"$SIM_BUILD/stardroid-sim" --watchy
+		"$SIM_BUILD/coolwatch-sim" --watchy
 	else
-		"$SIM_BUILD/stardroid-sim"
+		"$SIM_BUILD/coolwatch-sim"
 	fi
 }
 
@@ -206,7 +206,7 @@ cmd_screenshots(){
 	build_sim
 	python3 -c "import PIL" >/dev/null 2>&1 || python3 -m pip install --user pillow
 	step "Rendering docs/screenshots"
-	"$ROOT/sim/screenshots.sh" "$SIM_BUILD/stardroid-sim"
+	"$ROOT/sim/screenshots.sh" "$SIM_BUILD/coolwatch-sim"
 }
 
 cmd_clean(){
@@ -220,8 +220,8 @@ cmd_all(){
 	cmd_image
 	step "All done"
 	ok "Tests passed, and the $WATCH firmware image is in dist/"
-	local flash="./stardroid.sh flash"
-	[[ "$WATCH" != clockstar ]] && flash="./stardroid.sh --watch $WATCH flash"
+	local flash="./coolwatch.sh flash"
+	[[ "$WATCH" != clockstar ]] && flash="./coolwatch.sh --watch $WATCH flash"
 	if [[ -n "$(list_ports)" ]]; then
 		echo "  Watch detected. Flash it with: $flash"
 	else
@@ -231,9 +231,9 @@ cmd_all(){
 
 cmd_help(){
 	cat <<EOF
-${BOLD}StarDroid helper${RESET}
+${BOLD}Cool Watch OS helper${RESET}
 
-Usage: ./stardroid.sh [--watch NAME] [command] [args]
+Usage: ./coolwatch.sh [--watch NAME] [command] [args]
 
   --watch NAME     clockstar (default), watchy (v2.0), watchy-v15 or watchy-v10
 
@@ -242,7 +242,7 @@ Usage: ./stardroid.sh [--watch NAME] [command] [args]
   doctor           Check tools and look for a connected watch
   test [filter]    Build and run the test program (filter: part of a test name)
   build            Build the firmware
-  image            Build and merge dist/stardroid-<watch>.bin (flash at 0x0)
+  image            Build and merge dist/coolwatch-<watch>.bin (flash at 0x0)
   flash [port]     Build and flash the watch over USB
   monitor [port]   Open the serial monitor
   deploy [port]    Test, flash, then open the monitor

@@ -211,22 +211,16 @@ private:
 
 	void drawWelcome(os::Canvas& c){
 		const float t = anim / 1000.0f;
-		// Waving bugdroid
-		const int cx = 64, cy = 46;
-		const uint16_t g = col::AndroidGreen;
-		c.fillArc(cx, cy - 4, 0, 14, 180, 360, g);
-		c.fillCircle(cx - 5, cy - 10, 2, col::Bg);
-		c.fillCircle(cx + 5, cy - 10, 2, col::Bg);
-		c.drawWideLine(cx - 8, cy - 15, cx - 11, cy - 21, 1, g);
-		c.drawWideLine(cx + 8, cy - 15, cx + 11, cy - 21, 1, g);
-		c.fillSmoothRoundRect(cx - 14, cy - 1, 28, 22, 5, g);
-		c.fillRect(cx - 14, cy - 1, 28, 6, g);
-		c.fillSmoothRoundRect(cx - 9, cy + 18, 6, 10, 3, g);
-		c.fillSmoothRoundRect(cx + 3, cy + 18, 6, 10, 3, g);
-		c.fillSmoothRoundRect(cx - 22, cy, 6, 16, 3, g);
-		const float wave = mono() ? -0.9f : sinf(t * 7) * 0.5f - 0.9f;
-		const int ax = cx + 19, ay = cy + 3;
-		c.drawWideLine(ax, ay, ax + (int) (cosf(wave) * 12), ay + (int) (sinf(wave) * 12), 3, g);
+		// The logo, with little sparkles twinkling around it
+		drawLogo(c, 64, 44, 18, col::Mint, col::Bg);
+		if(!mono()){
+			const int spots[3][2] = { { 30, 26 }, { 100, 34 }, { 94, 66 } };
+			for(int i = 0; i < 3; i++){
+				const float tw = (sinf(t * 4 + i * 2.1f) + 1) / 2;
+				const int r = 1 + (int) (tw * 4);
+				sparkle(c, spots[i][0], spots[i][1], r, r, blend(col::Bg, col::Text, (uint8_t) (tw * 255)));
+			}
+		}
 
 		const char* hello[] = { "Hi there", "Hola", "Bonjour", "Hallo", "Ciao", "Zdravo" };
 		const int idx = (anim / 1400) % 6;
@@ -270,10 +264,10 @@ private:
 		c.fillSmoothCircle(64, 52, (int) (8 + p * 18), a.primary);
 		if(p >= 1) icon::check(c, 64, 52, a.container);
 		text(c, "You're all set", 64, 92, Body, col::Text, textdatum_t::middle_center);
-		text(c, "Enjoy StarDroid", 64, 108, Small, col::TextDim, textdatum_t::middle_center);
+		text(c, "Enjoy Cool Watch OS", 64, 108, Small, col::TextDim, textdatum_t::middle_center);
 	}
 };
 
 }
 
-const os::AppInfo apps::Setup = { "setup", "Setup", col::AndroidGreen, nullptr, os::make<SetupWizard>, false };
+const os::AppInfo apps::Setup = { "setup", "Setup", col::Mint, nullptr, os::make<SetupWizard>, false };

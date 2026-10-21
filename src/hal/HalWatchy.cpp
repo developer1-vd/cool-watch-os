@@ -1,6 +1,6 @@
 // SQFMI Watchy hardware layer (ESP32-PICO-D4, 200x200 e-paper).
 // Pins and quirks follow the official Watchy library (sqfmi/Watchy).
-#if defined(STARDROID_WATCHY)
+#if defined(COOLWATCH_WATCHY)
 
 #include "Hal.h"
 #include "Mono.h"
@@ -13,8 +13,8 @@
 #include <GxEPD2_BW.h>
 #include <SensorBMA423.hpp>
 
-#ifndef STARDROID_WATCHY_REV
-#define STARDROID_WATCHY_REV 20
+#ifndef COOLWATCH_WATCHY_REV
+#define COOLWATCH_WATCHY_REV 20
 #endif
 
 namespace {
@@ -24,10 +24,10 @@ namespace {
 constexpr int PinMenu = 26; // Select
 constexpr int PinBack = 25;
 constexpr int PinDown = 4;
-#if STARDROID_WATCHY_REV >= 20
+#if COOLWATCH_WATCHY_REV >= 20
 constexpr int PinUp = 35;
 constexpr int PinBattery = 34;
-#elif STARDROID_WATCHY_REV == 15
+#elif COOLWATCH_WATCHY_REV == 15
 constexpr int PinUp = 32;
 constexpr int PinBattery = 35;
 #else
@@ -227,7 +227,7 @@ void begin(){
 	battMv = sampleBattery();
 	lastBattSample = ::millis();
 
-	prefs.begin("stardroid");
+	prefs.begin("coolwatch");
 }
 
 void present(LGFX_Sprite& frame){
@@ -366,13 +366,13 @@ void restart(){
 }
 
 uint8_t revision(){
-	return STARDROID_WATCHY_REV;
+	return COOLWATCH_WATCHY_REV;
 }
 
 const char* deviceName(){
-#if STARDROID_WATCHY_REV >= 20
+#if COOLWATCH_WATCHY_REV >= 20
 	return "Watchy v2.0";
-#elif STARDROID_WATCHY_REV == 15
+#elif COOLWATCH_WATCHY_REV == 15
 	return "Watchy v1.5";
 #else
 	return "Watchy v1.0";

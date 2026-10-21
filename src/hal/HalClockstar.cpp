@@ -1,5 +1,5 @@
 // Clockstar 2.0 hardware layer (ESP32-S3, Arduino core).
-#if defined(ARDUINO) && !defined(LGFX_SDL) && !defined(STARDROID_WATCHY)
+#if defined(ARDUINO) && !defined(LGFX_SDL) && !defined(COOLWATCH_WATCHY)
 
 #include "Hal.h"
 #include "Pins.h"
@@ -252,7 +252,7 @@ void begin(){
 	battMv = sampleBattery();
 	lastBattSample = ::millis();
 
-	prefs.begin("stardroid");
+	prefs.begin("coolwatch");
 }
 
 void present(LGFX_Sprite& frame){

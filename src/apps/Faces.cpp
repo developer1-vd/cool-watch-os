@@ -23,8 +23,8 @@ void unreadDot(os::Canvas& c, int y){
 	if(os::unreadCount() > 0) c.fillSmoothCircle(64, y, 2, col::Text);
 }
 
-// Pixel: big stacked digits with a complication column.
-void drawPixel(os::Canvas& c, const os::DateTime& t, float){
+// Bold: big stacked digits with a complication column.
+void drawBold(os::Canvas& c, const os::DateTime& t, float){
 	const auto& a = accent();
 	char buf[8];
 	snprintf(buf, sizeof(buf), "%02d", displayHour(t.hour));
@@ -159,7 +159,7 @@ void drawRings(os::Canvas& c, const os::DateTime& t, float secFrac){
 
 // Terminal: for the developers.
 void drawTerminal(os::Canvas& c, const os::DateTime& t, float secFrac){
-	const uint16_t green = mono() ? col::Text : col::AndroidGreen; // full contrast on e-paper
+	const uint16_t green = mono() ? col::Text : col::Mint; // full contrast on e-paper
 	const uint16_t dim = mono() ? green : blend(col::Bg, green, 120);
 	// The 1 px bitmap font breaks up when scaled for e-paper; DejaVu doesn't.
 	const lgfx::IFont* small = mono() ? (const lgfx::IFont*) &fonts::DejaVu9 : &fonts::Font0;
@@ -202,7 +202,7 @@ void drawTerminal(os::Canvas& c, const os::DateTime& t, float secFrac){
 }
 
 const apps::FaceInfo Faces[] = {
-	{ "Pixel", drawPixel },
+	{ "Bold", drawBold },
 	{ "Analog", drawAnalog },
 	{ "Neon", drawNeon },
 	{ "Rings", drawRings },

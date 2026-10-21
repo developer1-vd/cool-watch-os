@@ -695,7 +695,7 @@ void render(uint32_t dt){
 		char buf[12];
 		snprintf(buf, sizeof(buf), "%.0f fps", fps);
 		frame.fillRect(0, H - 10, 34, 10, col::Bg);
-		text(frame, buf, 1, H - 1, Small, col::AndroidGreen, textdatum_t::bottom_left);
+		text(frame, buf, 1, H - 1, Small, col::Mint, textdatum_t::bottom_left);
 	}
 
 	hal::present(frame);

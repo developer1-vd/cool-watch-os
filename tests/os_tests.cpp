@@ -1,11 +1,11 @@
-// StarDroid test program.
+// Cool Watch OS test program.
 //
 // Runs the real OS and apps on the headless simulator with a virtual clock and
 // scripted buttons. Each test runs in its own forked process, so global OS
 // state is fresh every time and a crash fails one test instead of the run.
 //
-//   stardroid-tests            run everything
-//   stardroid-tests timer      run tests whose name contains "timer"
+//   coolwatch-tests            run everything
+//   coolwatch-tests timer      run tests whose name contains "timer"
 #include "hal/SimControl.h"
 #include "os/Os.h"
 #include "os/Ui.h"
@@ -828,16 +828,16 @@ TEST(watchy_drawer_hides_apps_it_cannot_run){
 		const auto& a = os::app(i);
 		if(a.inDrawer && os::appAvailable(a)) available++;
 	}
-	CHECK_EQ(available, 9); // no Flashlight (no backlight), no Dino (too fast for e-paper)
+	CHECK_EQ(available, 9); // no Flashlight (no backlight), no Star run (too fast for e-paper)
 	CHECK(!os::appAvailable(*os::findApp("flashlight")));
-	CHECK(!os::appAvailable(*os::findApp("dino")));
+	CHECK(!os::appAvailable(*os::findApp("runner")));
 	CHECK(os::appAvailable(*os::findApp("snake")));
 }
 
 TEST(watchy_only_refreshes_when_the_image_changes){
 	bootWatchy();
 	const int before = sim::refreshCount();
-	run(5000); // Pixel face has no seconds: nothing should change
+	run(5000); // Bold face has no seconds: nothing should change
 	CHECK_EQ(sim::refreshCount(), before);
 	press(Button::Select); // open the drawer
 	run(500);

@@ -111,7 +111,7 @@ void begin(){
 	lgfx::Panel_sdl::addKeyCodeMapping(SDLK_SPACE, KeyGpio[2]);
 	lgfx::Panel_sdl::addKeyCodeMapping(SDLK_ESCAPE, KeyGpio[3]);
 	lgfx::Panel_sdl::addKeyCodeMapping(SDLK_BACKSPACE, KeyGpio[3]);
-	((lgfx::Panel_sdl*) lcd->panel())->setWindowTitle(watchy() ? "StarDroid - Watchy simulator" : "StarDroid - Clockstar simulator");
+	((lgfx::Panel_sdl*) lcd->panel())->setWindowTitle(watchy() ? "Cool Watch OS - Watchy simulator" : "Cool Watch OS - Clockstar simulator");
 }
 
 void present(LGFX_Sprite& frame){

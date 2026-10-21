@@ -4,7 +4,7 @@
 #include <memory>
 #include "hal/Hal.h"
 
-// StarDroid: a tiny Android-inspired OS. Apps are Activities on a back stack,
+// Cool Watch OS: a tiny Android-inspired OS. Apps are Activities on a back stack,
 // started with Intents and drawn into a 128x128 canvas every frame.
 namespace os {
 
@@ -14,9 +14,9 @@ constexpr int W = 128;
 constexpr int H = 128;
 constexpr int StatusBarH = 12;
 
-constexpr const char* Name = "StarDroid";
+constexpr const char* Name = "Cool Watch OS";
 constexpr const char* Version = "1.0";
-constexpr const char* Codename = "Cupcake";
+constexpr const char* Codename = "Comet";
 
 // ---- Input -----------------------------------------------------------------
 
